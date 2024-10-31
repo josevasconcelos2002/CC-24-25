@@ -1,0 +1,17 @@
+[
+    {
+        "task_id": "task-202",
+        "frequency": 20,
+        "devices": [
+            {"device_id": "dev-1", "type": "sensor"},
+            {"device_id": "dev-2", "type": "actuator"}
+        ]
+    },
+    {
+        "task_id": "task-203",
+        "frequency": 15,
+        "devices": [
+            {"device_id": "dev-3", "type": "sensor"}
+        ]
+    }
+]
