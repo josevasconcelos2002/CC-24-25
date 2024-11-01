@@ -1,13 +1,16 @@
 from dataclasses import dataclass
 from typing import List, Dict
 
+from tasks.config import Config
+
 
 @dataclass
 class Task:
     
-    def __init__(self, id: int, frequency: int, duration: int, devices: List[str], config: Config):
+    def __init__(self, id: int, type: str, frequency: int, duration: int, devices: List[str], config: Config):
         
-        self.task_id = "T-" + id
+        self.task_id = "T-" + str(id)
+        self.type = type
         self.frequency = frequency
         self.duration = duration
         self.devices = devices
