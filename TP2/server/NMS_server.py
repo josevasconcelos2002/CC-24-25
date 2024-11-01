@@ -13,6 +13,7 @@ class NMS_server:
 
     def __init__ (self):
         self.lastTask = 1
+        self.tasks = Tasks()
 
     def parse_json(self,path: str):
 
@@ -71,6 +72,8 @@ class NMS_server:
             t = lista_tasks.get_task("T-"+str(id))
             print(t.task_id, t.type, t.devices)
             id += 1
+
+        self.tasks = lista_tasks
 
         #task_objects = [Task(self.lastTask, task["type"], task["frequency"], task["duration"], task["devices"], Config(Device_metrics(task["cpu_usage"], task["ram_usage", task["interface_stats"]]), Link_metrics(task[]))) for task in tasks_json]
 
