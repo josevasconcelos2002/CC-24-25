@@ -11,11 +11,27 @@ class Client:
         self.UDP_socket = self.setup_UDP_socket()
         self.TCP_socket = None    # socket TCP so e criado quando necessario
 
+        self.send_initial_info() # quando um cliente e criado, enviamos o seu <id> para o servidor
+
+
+    def Client(self, client_id, server_ip, server_port):
+        self.id = client_id
+        self.server_ip = server_ip
+        self.server_port = server_port
 
     def setup_UDP_socket(self):
         # Create a UDP socket
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         return udp_socket
+    
+
+    def send_initial_info(self):
+        # Serialize ID and other relevant client data
+        message = f"ID:{self.id},ServerIP:{self.server_ip},ServerPort:{self.server_port}".encode('utf-8')
+        
+        # Send this message to the server over UDP
+        self.UDP_socket.sendto(message, (self.server_ip, self.server_port))
+        print(f"Sent initial client info to server: {message.decode('utf-8')}")
     
     def send_UDP_datagram(self, sequence_number: int, message_type: int, data: bytes):
         # Build the UDP datagram with the defined structure
@@ -35,9 +51,9 @@ class Client:
         datagram = udp_header + message
         
         # Send the datagram to the server
-        self.socket.sendto(datagram, (self.server_ip, self.server_port))
-        print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
+        self.UDP_socket.sendto(datagram, (self.server_ip, self.server_port))
+        #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
 
     def close(self):
         # Close the socket
-        self.socket.close()
+        self.UDP_socket.close()

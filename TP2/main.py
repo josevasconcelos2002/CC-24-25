@@ -1,5 +1,5 @@
 from server.NMS_server import NMS_server
-from client.client import Client
+from clients.client import Client
 import os
 import time
 import threading
@@ -13,6 +13,7 @@ if __name__ == "__main__":
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
+
     # Start the server in a separate thread
     server_thread = threading.Thread(target=nms_server.listen_for_datagrams)
     server_thread.start()
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     # Create a UDP client instance
     client = Client(server_ip='127.0.0.1', server_port=54321)
 
+    """
     # Example of sending a datagram
     sequence_number = 1
     message_type = 1  # Example message type
@@ -31,6 +33,7 @@ if __name__ == "__main__":
     client.send_UDP_datagram(sequence_number, message_type, data)
 
     # Close the client socket
+    """
     client.close()
 
     # Optionally, you can join the server thread if needed

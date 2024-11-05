@@ -5,20 +5,24 @@ import threading
 from tasks.config import Config, Device_metrics, AlterflowConditions, LatencyConfig, Link_metrics
 from tasks.task import Task
 from tasks.tasks import Tasks
+from clients.clients import Clients
+from clients.client import Client
 
 class NMS_server:
 
     def __init__(self):
         self.lastTask = 1
         self.tasks = Tasks()
+        self.clients = Clients()
         self.UDP_socket = self.setup_UDP_socket()  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
-
+        """
         for _ in range(4):
             thread = threading.Thread(target=self.worker)
             thread.start()
             self.thread_pool.append(thread)
+        """
 
     def setup_UDP_socket(self):
         # Creates a UDP socket
@@ -102,16 +106,29 @@ class NMS_server:
             self.handle_datagram(data, addr)  # Process the received datagram
 
     def handle_datagram(self, data, addr):
-        # Unpack the datagram data, assuming the structure we discussed
-        udp_header = struct.unpack('!HHHH', data[:8])  # Adjust according to your protocol
-        source_port, dest_port, length, checksum = udp_header
+        # Unpack datagram data as before
+        udp_header = struct.unpack('!HHHH', data[:8])
+        payload = data[8:].decode('utf-8')
 
-        # Assuming you have sequence_number and message_type after
-        sequence_number, message_type = struct.unpack('!IB', data[8:13])  # 32 bits for seq, 8 bits for type
-        
-        # The rest is the payload
-        payload = data[13:]
+        # If the message contains an ID, parse and add the client
+        if payload.startswith("ID:"):
+            client_info = payload.split(",")
+            client_data = {}
+            for info in client_info:
+                key, value = info.split(":")
+                client_data[key.strip()] = value.strip()
+            if client_id and server_ip and server_port:
+                client_id = client_data.get("ID")
+                server_ip = client_data.get("ServerIP")
+                server_port = int(client_data.get("ServerPort"))
 
-        print(f"Recebido datagrama de {addr}:")
-        print(f"Porta de origem: {source_port}, Porta de destino: {dest_port}, Comprimento: {length}, Checksum: {checksum}")
-        print(f"Número de sequência: {sequence_number}, Tipo de mensagem: {message_type}, Dados: {payload.decode('utf-8')}")
+                client = Client(client_id, server_ip, server_port)
+
+                # Add client with additional fields
+                self.clients.add_client(client)
+                print(f"Client {client.id} added with IP {client.server_ip}, Port {client.server_port}")
+            else:
+                print("Error: Missing client data in registration message.")
+        else:
+            # Handle other messages
+            print(f"Received data: {payload}")
