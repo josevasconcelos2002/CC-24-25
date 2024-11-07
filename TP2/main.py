@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     # Create a UDP client instance
     client = Client(server_ip='127.0.0.1', server_port=54321)
+    client.send_initial_info()
 
     """
     # Example of sending a datagram

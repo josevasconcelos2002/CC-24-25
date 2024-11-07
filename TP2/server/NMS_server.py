@@ -105,30 +105,37 @@ class NMS_server:
             data, addr = self.UDP_socket.recvfrom(buffer_size)
             self.handle_datagram(data, addr)  # Process the received datagram
 
-    def handle_datagram(self, data, addr):
-        # Unpack datagram data as before
-        udp_header = struct.unpack('!HHHH', data[:8])
-        payload = data[8:].decode('utf-8')
+    def handle_datagram(self,data, addr):
+        # Decodifique os dados recebidos de bytes para string
+        payload = data.decode('utf-8')
+        print(f"Received data: {payload}")
 
-        # If the message contains an ID, parse and add the client
+        # Verifique se a mensagem contém um ID para processar os dados do cliente
         if payload.startswith("ID:"):
             client_info = payload.split(",")
             client_data = {}
+            
+            # Extraia pares chave:valor do payload
             for info in client_info:
-                key, value = info.split(":")
-                client_data[key.strip()] = value.strip()
+                if ":" in info:
+                    key, value = info.split(":", 1)  # Limite de divisão para capturar valores completos
+                    client_data[key.strip()] = value.strip()
+
+            # Obtenha os dados do cliente e valide se todos os campos estão presentes
+            client_id = client_data.get("ID")
+            server_ip = client_data.get("ServerIP")
+            server_port = client_data.get("ServerPort")
+
             if client_id and server_ip and server_port:
-                client_id = client_data.get("ID")
-                server_ip = client_data.get("ServerIP")
-                server_port = int(client_data.get("ServerPort"))
-
-                client = Client(client_id, server_ip, server_port)
-
-                # Add client with additional fields
+                # Converta a porta para inteiro e adicione o cliente
+                #client = Client(client_id, server_ip, int(server_port))
+                
+                client = Client(server_ip, int(server_port), client_id)
                 self.clients.add_client(client)
                 print(f"Client {client.id} added with IP {client.server_ip}, Port {client.server_port}")
+                print(str(self.clients.to_dict()))
             else:
-                print("Error: Missing client data in registration message.")
+                print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")
         else:
-            # Handle other messages
-            print(f"Received data: {payload}")
+            # Processa outras mensagens
+            print(f"Received non-registration data: {payload}")

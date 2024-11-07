@@ -4,20 +4,15 @@ import uuid
 
 class Client: 
 
-    def __init__(self, server_ip: str, server_port: int):
-        self.id = str(uuid.uuid4()) # generates a random id
+    def __init__(self, server_ip: str, server_port: int, client_id: str = None):
+        # Se o client_id não for fornecido, gera um ID aleatório
+        self.id = client_id if client_id else str(uuid.uuid4())
         self.server_ip = server_ip
         self.server_port = server_port
         self.UDP_socket = self.setup_UDP_socket()
-        self.TCP_socket = None    # socket TCP so e criado quando necessario
-
-        self.send_initial_info() # quando um cliente e criado, enviamos o seu <id> para o servidor
+        self.TCP_socket = None  # socket TCP só é criado quando necessário
 
 
-    def Client(self, client_id, server_ip, server_port):
-        self.id = client_id
-        self.server_ip = server_ip
-        self.server_port = server_port
 
     def setup_UDP_socket(self):
         # Create a UDP socket
@@ -53,6 +48,14 @@ class Client:
         # Send the datagram to the server
         self.UDP_socket.sendto(datagram, (self.server_ip, self.server_port))
         #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
+
+    def to_dict(self):
+        # Retorna os dados do cliente como um dicionário
+        return {
+            "id": self.id,
+            "server_ip": self.server_ip,
+            "server_port": self.server_port
+        }
 
     def close(self):
         # Close the socket
