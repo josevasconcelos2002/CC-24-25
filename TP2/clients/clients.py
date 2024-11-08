@@ -1,5 +1,5 @@
 import json
-from .client import Client
+from .client_server import ClientServer
 
 
 class Clients:
@@ -7,16 +7,16 @@ class Clients:
 
         self.clients = {}
 
-    def add_client(self, client: Client):
+    def add_client(self, id,client: ClientServer):
 
-        self.clients[client.id] = client
+        self.clients[id] = client
 
     def remove_client(self, id: str):
 
         if id in self.clients:
             del self.clients[id]
 
-    def get_client(self, id: str) -> Client:
+    def get_client(self, id: str) -> ClientServer:
 
         return self.clients.get(id)
     

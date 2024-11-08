@@ -27,7 +27,7 @@ class Client:
 
     def send_initial_info(self):
         # Serialize ID and other relevant client data
-        message = f"ID:{self.id},ServerIP:{self.server_ip},ServerPort:{self.server_port}".encode('utf-8')
+        message = f"ID:{self.id}".encode('utf-8')
         
         # Send this message to the server over UDP
         self.UDP_socket.sendto(message, (self.server_ip, self.server_port))

@@ -6,15 +6,16 @@ from tasks.config import Config, Device_metrics, AlterflowConditions, LatencyCon
 from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
-from clients.client import Client
+from clients.client_server import ClientServer
 
 class NMS_server:
 
     def __init__(self):
         self.lastTask = 1
         self.tasks = Tasks()
+        self.currentTask = 0
         self.clients = Clients()
-        self.UDP_socket = self.setup_UDP_socket()  # Initialize the UDP socket
+        self.UDP_socket = self.setup_UDP_socket(('127.0.0.1', 54321))  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
 
@@ -23,10 +24,10 @@ class NMS_server:
         udp_thread.start()
         self.threads.append(udp_thread)
 
-    def setup_UDP_socket(self):
+    def setup_UDP_socket(self, addr):
         # Creates a UDP socket
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.bind(('127.0.0.1', 54321))  # Bind to localhost and a specified port
+        udp_socket.bind(addr)  # Bind to localhost and a specified port
         return udp_socket
     
     def setup_TCP_socket(self):
@@ -108,7 +109,8 @@ class NMS_server:
         # Decodifique os dados recebidos de bytes para string
         payload = data.decode('utf-8')
         print(f"Received data: {payload}\n")
-
+        print(f"Adrr: {addr}\n")
+        
         # Verifique se a mensagem contém um ID para processar os dados do cliente
         if payload.startswith("ID:"):
             client_info = payload.split(",")
@@ -122,16 +124,23 @@ class NMS_server:
 
             # Obtenha os dados do cliente e valide se todos os campos estão presentes
             client_id = client_data.get("ID")
-            server_ip = client_data.get("ServerIP")
-            server_port = client_data.get("ServerPort")
+            client_addr = addr
 
-            if client_id and server_ip and server_port:
+            # port = createPort
+
+            socket = self.setup_UDP_socket(('127.0.0.1', 5555))
+
+            # self.sendMessage(socket, client_addrs,"Ack" + str(port))
+
+
+
+            if client_id and client_addr:
                 # Converta a porta para inteiro e adicione o cliente
                 #client = Client(client_id, server_ip, int(server_port))
                 
-                client = Client(server_ip, int(server_port), client_id)
-                self.clients.add_client(client)
-                print(f"Client {client.id} added with IP {client.server_ip}, Port {client.server_port}")
+                client = ClientServer(addr, socket)
+                self.clients.add_client(client_id, client)
+                print(f"Client {client_id} added with Address {client_addr}")
                 print(f"{str(self.clients.to_dict())}\n")
             else:
                 print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")
