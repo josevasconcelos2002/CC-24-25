@@ -22,9 +22,14 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Create a UDP client instance
-    client = Client(server_ip='127.0.0.1', server_port=54321)
-    client.send_initial_info()
+    client1 = Client(server_ip='127.0.0.1', server_port=54321)
+    client1.send_initial_info()
 
+    client2 = Client(server_ip='127.0.0.1', server_port=54321)
+    client2.send_initial_info()
+
+    client3 = Client(server_ip='127.0.0.1', server_port=54321)
+    client3.send_initial_info()
     """
     # Example of sending a datagram
     sequence_number = 1
@@ -35,7 +40,9 @@ if __name__ == "__main__":
 
     # Close the client socket
     """
-    client.close()
+    client1.close()
+    client2.close()
+    client3.close()
 
     # Optionally, you can join the server thread if needed
     server_thread.join()

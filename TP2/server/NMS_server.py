@@ -17,12 +17,11 @@ class NMS_server:
         self.UDP_socket = self.setup_UDP_socket()  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
-        """
-        for _ in range(4):
-            thread = threading.Thread(target=self.worker)
-            thread.start()
-            self.thread_pool.append(thread)
-        """
+
+        # Inicia uma thread para escutar clientes UDP
+        udp_thread = threading.Thread(target=self.listen_for_datagrams)
+        udp_thread.start()
+        self.threads.append(udp_thread)
 
     def setup_UDP_socket(self):
         # Creates a UDP socket
@@ -99,7 +98,7 @@ class NMS_server:
         self.tasks = lista_tasks
 
     def listen_for_datagrams(self):
-        print("Servidor UDP aguardando mensagens...")
+        print("Servidor UDP aguardando mensagens...\n")
         buffer_size = 1024  # Buffer size to receive datagrams
         while True:
             data, addr = self.UDP_socket.recvfrom(buffer_size)
@@ -108,7 +107,7 @@ class NMS_server:
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
         payload = data.decode('utf-8')
-        print(f"Received data: {payload}")
+        print(f"Received data: {payload}\n")
 
         # Verifique se a mensagem contém um ID para processar os dados do cliente
         if payload.startswith("ID:"):
@@ -133,7 +132,7 @@ class NMS_server:
                 client = Client(server_ip, int(server_port), client_id)
                 self.clients.add_client(client)
                 print(f"Client {client.id} added with IP {client.server_ip}, Port {client.server_port}")
-                print(str(self.clients.to_dict()))
+                print(f"{str(self.clients.to_dict())}\n")
             else:
                 print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")
         else:

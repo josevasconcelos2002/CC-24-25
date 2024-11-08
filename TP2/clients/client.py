@@ -1,6 +1,7 @@
 import socket
 import struct
 import uuid
+from tasks.task import Task
 
 class Client: 
 
@@ -11,6 +12,10 @@ class Client:
         self.server_port = server_port
         self.UDP_socket = self.setup_UDP_socket()
         self.TCP_socket = None  # socket TCP só é criado quando necessário
+        self.Tasks = []
+
+    def setTask(self,task: Task):
+        self.Task = task
 
 
 
@@ -54,7 +59,8 @@ class Client:
         return {
             "id": self.id,
             "server_ip": self.server_ip,
-            "server_port": self.server_port
+            "server_port": self.server_port,
+            "Tasks": self.Tasks
         }
 
     def close(self):
