@@ -27,3 +27,7 @@ class Clients:
     def __str__(self):
         # Converte o dicionário de tarefas para uma string JSON formatada
         return json.dumps(self.to_dict(), indent=4)
+
+    def __iter__(self):
+    # Make the class iterable by returning an iterator over self.clients.items()
+        return iter(self.clients.items())

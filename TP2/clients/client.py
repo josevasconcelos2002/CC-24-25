@@ -2,6 +2,8 @@ import socket
 import struct
 import uuid
 from tasks.task import Task
+import threading
+import time
 
 class Client: 
 
@@ -13,6 +15,9 @@ class Client:
         self.UDP_socket = self.setup_UDP_socket()
         self.TCP_socket = None  # socket TCP só é criado quando necessário
         self.Tasks = []
+        self.connected = False
+        self.lock = threading.Lock()
+        self._stop_event = threading.Event()
 
     def setTask(self,task: Task):
         self.Task = task
@@ -26,12 +31,14 @@ class Client:
     
 
     def send_initial_info(self):
-        # Serialize ID and other relevant client data
-        message = f"ID:{self.id}".encode('utf-8')
+        while self.connected == False:
+            # Serialize ID and other relevant client data
+            message = f"ID:{self.id}".encode('utf-8')
         
-        # Send this message to the server over UDP
-        self.UDP_socket.sendto(message, (self.server_ip, self.server_port))
-        print(f"Sent initial client info to server: {message.decode('utf-8')}")
+            # Send this message to the server over UDP
+            self.UDP_socket.sendto(message, (self.server_ip, self.server_port))
+            print(f"Sent initial client info to server: {message.decode('utf-8')}")
+            time.sleep(0.5)
     
     def send_UDP_datagram(self, sequence_number: int, message_type: int, data: bytes):
         # Build the UDP datagram with the defined structure
@@ -54,6 +61,51 @@ class Client:
         self.UDP_socket.sendto(datagram, (self.server_ip, self.server_port))
         #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
 
+
+
+    def listen_for_datagrams(self):
+        buffer_size = 1024
+        while not self._stop_event.is_set():
+            try:
+                print(f"Client listening:\n")
+                data, addr = self.UDP_socket.recvfrom(buffer_size)
+                if data:
+                    self.server_port = addr[1]
+                    self.handle_datagram(data, addr)
+            except ConnectionResetError as e:
+                print(f"Connection reset error: {e}")
+                break
+            except OSError as e:
+                print(f"OS error (likely socket issue): {e}")
+                break
+
+    def handle_datagram(self,data, addr):
+        # Decodifique os dados recebidos de bytes para string
+        print(f"Received raw data: {data}")
+        payload = data[13:]
+        payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
+        headers = data[:len(payload)]
+        print(f"Received data: {payload}\n")
+        print(f"Adrr: {addr}\n")
+        
+        # Verifique se a mensagem contém um ID para processar os dados do cliente
+        if payload.startswith("Ack:"):
+            server_info = payload.split(",")
+            server_data = {}
+            
+            # Extraia pares chave:valor do payload
+            for info in server_info:
+                if ":" in info:
+                    key, value = info.split(":", 1)  # Limite de divisão para capturar valores completos
+                    server_data[key.strip()] = value.strip()
+
+            # Obtenha os dados do cliente e valide se todos os campos estão presentes
+            with self.lock:        
+                self.server_port = server_data.get("Port")
+                self.connected = True
+
+
+
     def to_dict(self):
         # Retorna os dados do cliente como um dicionário
         return {
@@ -64,5 +116,6 @@ class Client:
         }
 
     def close(self):
+        self._stop_event.set()
         # Close the socket
         self.UDP_socket.close()

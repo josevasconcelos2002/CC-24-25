@@ -7,6 +7,7 @@ from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
 from clients.client_server import ClientServer
+import random
 
 class NMS_server:
 
@@ -18,6 +19,7 @@ class NMS_server:
         self.UDP_socket = self.setup_UDP_socket(('127.0.0.1', 54321))  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
+        self._stop_event = threading.Event()
 
         # Inicia uma thread para escutar clientes UDP
         udp_thread = threading.Thread(target=self.listen_for_datagrams)
@@ -36,6 +38,39 @@ class NMS_server:
         TCP_socket.bind(('127.0.0.1', 54322))
         return TCP_socket
 
+    def sendMessage(self, socket, addr, data):
+        # Build the UDP datagram with the defined structure
+        source_port = socket.getsockname()[1]  # Source port (can be configurable)
+        dest_port = addr[1]
+
+        data = data.encode('utf-8')
+
+        chunk_size = 400
+        chunks = [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
+
+        sequence_number = 0
+
+        for info in chunks:
+
+            # UDP header fields
+            length = 13 + len(info)  # UDP header (8 bytes) + data
+            checksum = 0  # Simulated, checksum calculation not implemented
+
+            # Pack the UDP header fields
+            udp_header = struct.pack('!HHHH', source_port, dest_port, length, checksum)
+            # Pack additional protocol fields
+            message = struct.pack('!IB', sequence_number, 0) + info
+
+            sequence_number += 1
+        
+            # Combine the UDP header with the message
+            datagram = udp_header + message
+
+            print(f"datagram: {datagram}\n")
+        
+            # Send the datagram to the server
+            self.UDP_socket.sendto(datagram, addr)
+            #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
 
     def parse_json(self, path: str):
         # Existing code for parsing JSON remains unchanged
@@ -98,12 +133,35 @@ class NMS_server:
 
         self.tasks = lista_tasks
 
+    def createPort(self):
+        port = random.randint(1, 65535)
+        clients = self.clients.to_dict()  # Corrected to call to_dict()
+
+        # Iterate over client objects
+        for id, client in clients.items():  # `client` should be a `ClientServer` instance
+            # Ensure `client` has a valid socket and that it’s a socket object
+            if hasattr(client, 'socket') and hasattr(client.socket, 'getsockname'):
+                if client.socket.getsockname()[1] == port:
+                    port = random.randint(1, 65535)
+
+        return port
+
+
+
     def listen_for_datagrams(self):
-        print("Servidor UDP aguardando mensagens...\n")
-        buffer_size = 1024  # Buffer size to receive datagrams
-        while True:
-            data, addr = self.UDP_socket.recvfrom(buffer_size)
-            self.handle_datagram(data, addr)  # Process the received datagram
+        buffer_size = 1024
+        while not self._stop_event.is_set():
+            try:
+                print(f"Server listening:\n")
+                data, addr = self.UDP_socket.recvfrom(buffer_size)
+                if data:
+                    self.handle_datagram(data, addr)
+            except ConnectionResetError as e:
+                print(f"Connection reset error: {e}")
+                break
+            except OSError as e:
+                print(f"OS error (likely socket issue): {e}")
+                break
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
@@ -122,15 +180,16 @@ class NMS_server:
                     key, value = info.split(":", 1)  # Limite de divisão para capturar valores completos
                     client_data[key.strip()] = value.strip()
 
+
             # Obtenha os dados do cliente e valide se todos os campos estão presentes
             client_id = client_data.get("ID")
             client_addr = addr
 
-            # port = createPort
+            port = self.createPort()
 
-            socket = self.setup_UDP_socket(('127.0.0.1', 5555))
+            socket = self.setup_UDP_socket(('127.0.0.1', port))
 
-            # self.sendMessage(socket, client_addrs,"Ack" + str(port))
+            self.sendMessage(socket, client_addr,"Ack: " + "Port:"+str(port))
 
 
 
@@ -147,3 +206,9 @@ class NMS_server:
         else:
             # Processa outras mensagens
             print(f"Received non-registration data: {payload}")
+
+    def close(self):
+            self._stop_event.set()
+            # Close the socket
+            self.UDP_socket.close()
+            self.TCP_socket.close()
