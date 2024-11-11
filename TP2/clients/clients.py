@@ -7,6 +7,9 @@ class Clients:
 
         self.clients = {}
 
+    def __len__(self):
+        return len(self.clients)
+
     def add_client(self, id,client: ClientServer):
 
         self.clients[id] = client

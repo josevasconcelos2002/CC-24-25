@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Dict
+import json
 
 
 
@@ -16,7 +17,12 @@ class Device_metrics:
         self.ram_usage = ram_usage
         self.interface_stats = interface_stats
 
-
+    def to_dict(self):
+        return {
+            "cpu_usage": self.cpu_usage,
+            "ram_usage": self.ram_usage,
+            "interface_stats": self.interface_stats
+        }
 
 
 class AlterflowConditions:
@@ -35,7 +41,15 @@ class AlterflowConditions:
         self.packet_loss = packet_loss if packet_loss is not None else 0
         self.jitter_limit = jitter_limit if jitter_limit is not None else 0        
 
-
+    def to_dict(self):
+        return {
+            "alterflow_conditions": self.alterflow_conditions,
+            "cpu_usage": self.cpu_usage,
+            "ram_usage": self.ram_usage,
+            "interface_stats": self.interface_stats,
+            "packet_loss": self.packet_loss,
+            "jitter_limit": self.jitter_limit
+        }    
 
 
     
@@ -50,7 +64,12 @@ class LatencyConfig:
         self.destination = destination if destination is not None else ""
         self.packet_count = packet_count if packet_count is not None else 0
 
-
+    def to_dict(self):
+        return {
+            "latency": self.latency,
+            "destination": self.destination,
+            "packet_count": self.packet_count
+        }    
 
 
 
@@ -73,6 +92,17 @@ class Link_metrics:
         self.latency = latency
 
 
+    def to_dict(self):
+        return {
+            "use_iperf": self.use_iperf,
+            "server_address": self.server_address,
+            "frequency": self.frequency,
+            "bandwidth": self.bandwidth,
+            "jitter": self.jitter,
+            "packet_loss": self.packet_loss,
+            "latency": self.latency.to_dict()
+        }    
+
 
 class Config:
     device_metrics: Device_metrics
@@ -83,3 +113,10 @@ class Config:
         self.device_metrics = device_metrics
         self.link_metrics = link_metrics
         self.alterflow_conditions = alterflow_conditions
+
+    def to_dict(self):
+        return {
+            "device_metrics": self.device_metrics.to_dict(),
+            "link_metrics": self.link_metrics.to_dict(),
+            "alterflow_conditions": self.alterflow_conditions.to_dict()
+        }

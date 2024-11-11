@@ -34,7 +34,7 @@
         "type": "iperf args",
         "frequency": 5,
         "duration": 5,
-        "devices": ["n4", "n5", "n6"],
+        "devices": ["n1", "n5", "n2"],
         "Devices": {
             "devices_metric": {
                 "cpu_usage": true,

@@ -33,7 +33,7 @@ class Tasks:
         :param task_id: ID da tarefa a ser recuperada.
         :return: Objeto Task correspondente ao ID fornecido.
         """
-        return self.tasks.get(task_id)
+        return self.tasks.get('T-'+str(task_id))
     
     def to_dict(self):
         """
@@ -46,3 +46,6 @@ class Tasks:
     def __str__(self):
         # Converte o dicionário de tarefas para uma string JSON formatada
         return json.dumps(self.to_dict(), indent=4)
+
+    def __len__(self):
+        return len(self.tasks)

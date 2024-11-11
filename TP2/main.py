@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
 
     # Start the server in a separate thread
-    server_thread = threading.Thread(target=nms_server.listen_for_datagrams)
+    server_thread = threading.Thread(target=nms_server.listen_for_datagrams, args=(nms_server.UDP_socket,))
     server_thread.start()
 
     # Give the server a moment to start up
@@ -40,6 +40,11 @@ if __name__ == "__main__":
 
     # Close the client socket
     """
+<<<<<<< Updated upstream
+=======
+    time.sleep(20)
+
+>>>>>>> Stashed changes
     client1.close()
     client2.close()
     client3.close()

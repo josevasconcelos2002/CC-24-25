@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Dict
+import json
 
 from tasks.config import Config
 
@@ -17,10 +18,19 @@ class Task:
         self.config = config 
 
 
-    def to_dict(self):
+    def getDevices(self):
+        return self.devices
 
+    def to_dict(self):
         return {
             "task_id": self.task_id,
+            "type": self.type,
             "frequency": self.frequency,
-            "devices": self.devices
+            "duration": self.duration,
+            "devices": self.devices,
+            "config": self.config.to_dict()
         }
+
+    def to_bytes(self):
+        # Convert task to dictionary, then to JSON string
+        return json.dumps(self.to_dict())
