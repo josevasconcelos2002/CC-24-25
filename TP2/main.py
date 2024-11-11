@@ -13,6 +13,9 @@ if __name__ == "__main__":
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
+    server_ip='127.0.0.1'
+    server_port=54321
+
 
     # Start the server in a separate thread
     server_thread = threading.Thread(target=nms_server.listen_for_datagrams, args=(nms_server.UDP_socket,))
@@ -22,13 +25,25 @@ if __name__ == "__main__":
     time.sleep(1)
 
     # Create a UDP client instance
-    client1 = Client(server_ip='127.0.0.1', server_port=54321)
+    client1 = Client(server_ip, server_port, 'n1')
+
+    client1_thread = threading.Thread(target=client1.listen_for_datagrams)
+    client1_thread.start()
+
     client1.send_initial_info()
 
-    client2 = Client(server_ip='127.0.0.1', server_port=54321)
+    client2 = Client(server_ip, server_port, 'n2')
+
+    client2_thread = threading.Thread(target=client2.listen_for_datagrams)
+    client2_thread.start()
+
     client2.send_initial_info()
 
-    client3 = Client(server_ip='127.0.0.1', server_port=54321)
+    client3 = Client(server_ip, server_port, 'n3')
+
+    client3_thread = threading.Thread(target=client3.listen_for_datagrams)
+    client3_thread.start()
+
     client3.send_initial_info()
     """
     # Example of sending a datagram
@@ -40,14 +55,18 @@ if __name__ == "__main__":
 
     # Close the client socket
     """
-<<<<<<< Updated upstream
-=======
     time.sleep(20)
 
->>>>>>> Stashed changes
     client1.close()
     client2.close()
     client3.close()
 
+    client1_thread.join()
+    client2_thread.join()
+    client3_thread.join()
+
+
     # Optionally, you can join the server thread if needed
+    nms_server.close()
+
     server_thread.join()

@@ -2,12 +2,9 @@ import socket
 import struct
 import uuid
 from tasks.task import Task
-<<<<<<< Updated upstream
-=======
 import threading
 import time
 import random
->>>>>>> Stashed changes
 
 class Client: 
 
@@ -19,6 +16,9 @@ class Client:
         self.UDP_socket = self.setup_UDP_socket()
         self.TCP_socket = None  # socket TCP só é criado quando necessário
         self.Tasks = []
+        self.connected = False
+        self.lock = threading.Lock()
+        self._stop_event = threading.Event()
 
     def setTask(self,task: Task):
         self.Task = task
@@ -33,14 +33,6 @@ class Client:
     
 
     def send_initial_info(self):
-<<<<<<< Updated upstream
-        # Serialize ID and other relevant client data
-        message = f"ID:{self.id}".encode('utf-8')
-        
-        # Send this message to the server over UDP
-        self.UDP_socket.sendto(message, (self.server_ip, self.server_port))
-        print(f"Sent initial client info to server: {message.decode('utf-8')}")
-=======
         while self.connected == False and not self._stop_event.is_set():
             # Serialize ID and other relevant client data
             message = f"ID:{self.id}"
@@ -49,7 +41,6 @@ class Client:
             self.sendMessage(self.UDP_socket, (self.server_ip, self.server_port), message)
             print(f"Sent initial client info to server: {message}")
             time.sleep(0.5)
->>>>>>> Stashed changes
     
     def sendMessage(self, socket, addr, data):
         with self.lock:
@@ -93,8 +84,6 @@ class Client:
                 self.UDP_socket.sendto(datagram, addr)
                 #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
 
-<<<<<<< Updated upstream
-=======
 
 
     def listen_for_datagrams(self):
@@ -146,7 +135,6 @@ class Client:
                 print(self.server_port)
 
 
->>>>>>> Stashed changes
     def to_dict(self):
         # Retorna os dados do cliente como um dicionário
         return {
@@ -157,12 +145,7 @@ class Client:
         }
 
     def close(self):
-<<<<<<< Updated upstream
-        # Close the socket
-        self.UDP_socket.close()
-=======
         with self.lock:
             self._stop_event.set()
             # Close the socket
             self.UDP_socket.close()
->>>>>>> Stashed changes

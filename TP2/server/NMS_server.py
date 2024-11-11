@@ -7,12 +7,9 @@ from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
 from clients.client_server import ClientServer
-<<<<<<< Updated upstream
-=======
 from server.NMS_server_UDP import NMS_server_UDP
 import random
 import time
->>>>>>> Stashed changes
 
 class NMS_server:
 
@@ -25,12 +22,9 @@ class NMS_server:
         self.UDP_socket = self.setup_UDP_socket(('127.0.0.1', 54321))  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
-<<<<<<< Updated upstream
-=======
         self.cond = threading.Condition()
         self.lock = threading.Lock()
         self._stop_event = threading.Event()
->>>>>>> Stashed changes
 
         # Inicia uma thread para escutar clientes UDP
         #udp_thread = threading.Thread(target=self.listen_for_datagrams, args=(self.UDP_socket,))
@@ -49,8 +43,6 @@ class NMS_server:
         TCP_socket.bind(('127.0.0.1', 54322))
         return TCP_socket
 
-<<<<<<< Updated upstream
-=======
     def sendMessage(self, socket, addr, data):
         # Build the UDP datagram with the defined structure
         source_port = socket.getsockname()[1]  # Source port (can be configurable)
@@ -85,7 +77,6 @@ class NMS_server:
             # Send the datagram to the server
             self.UDP_socket.sendto(datagram, addr)
             #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
->>>>>>> Stashed changes
 
     def parse_json(self, path: str):
         # Existing code for parsing JSON remains unchanged
@@ -188,14 +179,6 @@ class NMS_server:
 
 
 
-<<<<<<< Updated upstream
-    def listen_for_datagrams(self):
-        print("Servidor UDP aguardando mensagens...\n")
-        buffer_size = 1024  # Buffer size to receive datagrams
-        while True:
-            data, addr = self.UDP_socket.recvfrom(buffer_size)
-            self.handle_datagram(data, addr)  # Process the received datagram
-=======
     def createPort(self):
         port = random.randint(1, 65535)
         clients = self.clients.to_dict()  # Corrected to call to_dict()
@@ -225,7 +208,6 @@ class NMS_server:
             except OSError as e:
                 print(f"OS error (likely socket issue): {e}")
                 break
->>>>>>> Stashed changes
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
@@ -247,19 +229,16 @@ class NMS_server:
                     key, value = info.split(":", 1)  # Limite de divisão para capturar valores completos
                     client_data[key.strip()] = value.strip()
 
+
             # Obtenha os dados do cliente e valide se todos os campos estão presentes
             client_id = client_data.get("ID")
             client_addr = addr
 
-            # port = createPort
+            port = self.createPort()
 
-            socket = self.setup_UDP_socket(('127.0.0.1', 5555))
+            socket = self.setup_UDP_socket(('127.0.0.1', port))
 
-<<<<<<< Updated upstream
-            # self.sendMessage(socket, client_addrs,"Ack" + str(port))
-=======
             self.sendMessage(socket, client_addr,"Ack," + "Port:"+str(port))
->>>>>>> Stashed changes
 
 
 
@@ -283,8 +262,6 @@ class NMS_server:
         else:
             # Processa outras mensagens
             print(f"Received non-registration data: {payload}")
-<<<<<<< Updated upstream
-=======
 
     def close(self):
             self._stop_event.set()
@@ -292,4 +269,3 @@ class NMS_server:
             # Close the socket
             self.UDP_socket.close()
             self.TCP_socket.close()
->>>>>>> Stashed changes
