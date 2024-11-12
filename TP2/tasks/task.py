@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import pickle
 from typing import List, Dict
 import json
 
@@ -34,3 +35,12 @@ class Task:
     def to_bytes(self):
         # Convert task to dictionary, then to JSON string
         return json.dumps(self.to_dict())
+    
+    # tranforma a instancia do objeto Task em binario
+    def serialize(self):
+        return pickle.dumps(self)
+    
+    # Desserializa os dados binários para criar uma nova instância de Task
+    @classmethod
+    def deserialize(cls, data):
+        return pickle.loads(data)
