@@ -43,12 +43,12 @@ class AlterflowConditions:
 
     def to_dict(self):
         return {
-            "alterflow_conditions": self.alterflow_conditions,
+            "alterflow": self.alterflow_conditions,
             "cpu_usage": self.cpu_usage,
             "ram_usage": self.ram_usage,
             "interface_stats": self.interface_stats,
             "packet_loss": self.packet_loss,
-            "jitter_limit": self.jitter_limit
+            "jitter": self.jitter_limit
         }    
 
 
@@ -100,7 +100,9 @@ class Link_metrics:
             "bandwidth": self.bandwidth,
             "jitter": self.jitter,
             "packet_loss": self.packet_loss,
-            "latency": self.latency.to_dict()
+            "latency": self.latency.latency,
+            "destination": self.latency.destination,
+            "packet_count": self.latency.packet_count
         }    
 
 
@@ -116,7 +118,7 @@ class Config:
 
     def to_dict(self):
         return {
-            "device_metrics": self.device_metrics.to_dict(),
+            "devices_metric": self.device_metrics.to_dict(),
             "link_metrics": self.link_metrics.to_dict(),
-            "alterflow_conditions": self.alterflow_conditions.to_dict()
+            "AlterFlowConditions": self.alterflow_conditions.to_dict()
         }

@@ -1,6 +1,8 @@
+import json
 import socket
 import struct
 import uuid
+from tasks.parser import parseTasks
 from tasks.task import Task
 import threading
 import time
@@ -22,8 +24,7 @@ class Client:
         self.sequences = {}
         self.sequence = 0
 
-    def setTask(self,task: Task):
-        self.Task = task
+
 
 
 
@@ -106,10 +107,9 @@ class Client:
 
 
     def parseTask(self, sequenceLength):
-        taskString = ""
-        for i in range(0,sequenceLength): 
-            taskString +=  self.sequences[i]
-        print(taskString)
+        taskList = [self.sequences[i] for i in range(sequenceLength)]
+        return "".join(taskList)
+
 
 
 
@@ -146,18 +146,38 @@ class Client:
                 self.connected = True
 
         else:
-            with self.lock:
+            #with self.lock:
                 time.sleep(3)
                 self.sendMessage(self.UDP_socket, (self.server_ip, self.server_port), "Received")
                 self.sequences[sequence_number] = payload
                 self.sequence += 1
                 print("\nSequence: " + str(self.sequence))
                 print("Sequence Length: " + str(sequence_length))
-                if sequence == sequence_length:
-                    print("ESTOU AQUI!")
-                    # parseTask -> executeTask()
-                    self.parseTask(sequence_length)
-                    #Ack para o servidor
+                if self.sequence == sequence_length:
+                    # parseTask
+                    taskString = self.parseTask(sequence_length)
+                    print(taskString)
+                    
+                    
+                    # Converte a string JSON para um dicionário Python
+                    taskDict = json.loads(taskString)
+                        
+                    # parse taskString to Task
+                    taskId = taskDict["task_id"]
+                        
+                    # Chama a função `parseTasks` com o `taskId` e o `taskDict`
+                    taskObject = parseTasks(taskId, taskDict)
+                        
+                    # guardar Task no self.Tasks atraves do metodo append
+                    self.Tasks.append(taskObject)
+                    for task in self.Tasks:
+                        print(task.to_dict())
+                    # Enviar Ack para o servidor
+
+                    # Criar Threads no cliente : Metrics Thread, AlertFlow Thread , Execute Task Thread
+
+                    # Execute Task
+
                     print(self.server_port)
 
 

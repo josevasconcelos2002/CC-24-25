@@ -29,7 +29,7 @@ class Task:
             "frequency": self.frequency,
             "duration": self.duration,
             "devices": self.devices,
-            "config": self.config.to_dict()
+            "Devices": self.config.to_dict()
         }
 
     def to_bytes(self):
