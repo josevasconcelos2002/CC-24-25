@@ -19,6 +19,8 @@ class Client:
         self.connected = False
         self.lock = threading.Lock()
         self._stop_event = threading.Event()
+        self.sequences = {}
+        self.sequence = 0
 
     def setTask(self,task: Task):
         self.Task = task
@@ -101,12 +103,27 @@ class Client:
                 print(f"OS error (likely socket issue): {e}")
                 break
 
+
+
+    def parseTask(self, sequenceLength):
+        taskString = ""
+        for i in range(0,sequenceLength): 
+            taskString +=  self.sequences[i]
+        print(taskString)
+
+
+
+
+    
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
         print(f"Received raw data: {data}")
         payload = data[16:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
-        headers = data[:len(payload)]
+        headers = data[:8]
+        sequence = data[8:16]
+        source_port, dest_port, length, checksum = struct.unpack('!HHHH', headers)
+        sequence_number, sequence_length = struct.unpack('!II', sequence)
         print(f"Received data: {payload}\n")
         print(f"Adrr: {addr}\n")
         
@@ -129,10 +146,19 @@ class Client:
                 self.connected = True
 
         else:
-            #with self.lock:
+            with self.lock:
                 time.sleep(3)
                 self.sendMessage(self.UDP_socket, (self.server_ip, self.server_port), "Received")
-                print(self.server_port)
+                self.sequences[sequence_number] = payload
+                self.sequence += 1
+                print("\nSequence: " + str(self.sequence))
+                print("Sequence Length: " + str(sequence_length))
+                if sequence == sequence_length:
+                    print("ESTOU AQUI!")
+                    # parseTask -> executeTask()
+                    self.parseTask(sequence_length)
+                    #Ack para o servidor
+                    print(self.server_port)
 
 
     def to_dict(self):
@@ -146,6 +172,6 @@ class Client:
 
     def close(self):
         with self.lock:
+            self.UDP_socket.close()
             self._stop_event.set()
             # Close the socket
-            self.UDP_socket.close()
