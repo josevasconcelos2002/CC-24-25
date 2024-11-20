@@ -7,6 +7,7 @@ from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
 from clients.client_server import ClientServer
+from misc.sendMessage import sendMessage
 import random
 import time
 
@@ -19,13 +20,15 @@ class NMS_server_UDP:
 
 
 
-    def listen_for_datagrams(self, cond, device, socket):
+    def listen_for_datagrams(self, cond, device, socket, addr, task):
         buffer_size = 1024
         if self.currentT == self.maxT:
             cond.wait()
         self.currentT += 1
         sequence = 0
         received = False
+        socket.settimeout(30)
+        sendMessage(socket, addr, task.to_bytes(), 1)
         while not received:
             try:
                 print(f"Server client listening:\n")
@@ -44,20 +47,26 @@ class NMS_server_UDP:
                     self.currentT -=1
                     del self.threads[device]
                     print(f"Received data length: {len(data)}")
-                    payload = data[16:]
-                    headers = data[:8]
-                    seq = data[8:16]
-                    source_port, dest_port, length, checksum = struct.unpack('!HHHH', headers)
-                    sequence_number, sequence_length = struct.unpack('!II', seq)
+                    payload = data[14:]
+                    headers = data[:10]
+                    seq = data[10:14]
+                    source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
+                    sequence_number, sequence_length = struct.unpack('!HH', seq)
                     sequence += 1
                     if sequence == sequence_length:
                         received = True
-                    print(payload.decode('utf-8')+" hello")
-                    with cond:
-                        cond.notify()
+                        print(payload.decode('utf-8')+" hello")
+                        with cond:
+                            cond.notify()
+            except socket.timeout:
+                print(f"Timeout occured in {addr}!")
+                sequence = 0
+                sendMessage(socket, addr, task.to_bytes(), 1)
             except ConnectionResetError as e:
                 print(f"Connection reset error: {e}")
                 break
             except OSError as e:
                 print(f"OS error (likely socket issue): {e}")
+                break
+            finally:
                 break

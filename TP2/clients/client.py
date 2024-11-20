@@ -4,6 +4,7 @@ import struct
 import uuid
 from tasks.parser import parseTasks
 from tasks.task import Task
+from misc.sendMessage import sendMessage
 import threading
 import time
 import random
@@ -37,55 +38,18 @@ class Client:
 
     def send_initial_info(self):
         while self.connected == False and not self._stop_event.is_set():
-            # Serialize ID and other relevant client data
-            message = f"ID:{self.id}"
+
         
             # Send this message to the server over UDP
-            self.sendMessage(self.UDP_socket, (self.server_ip, self.server_port), message)
-            print(f"Sent initial client info to server: {message}")
-            time.sleep(0.5)
-    
-    def sendMessage(self, socket, addr, data):
-        with self.lock:
-            # Build the UDP datagram with the defined structure
-            source_port = socket.getsockname()[1]  # Source port (can be configurable)
-            dest_port = self.server_port
-
-            data = data.encode('utf-8')
-
-            chunk_size = 400
-            chunks = [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
-
-            sequence_number = 0
-            sequence_length = len(chunks)
-
-            for info in chunks:
-
-                # UDP header fields
-                length = 13 + len(info)  # UDP header (8 bytes) + data
-                checksum = 0  # Simulated, checksum calculation not implemented
-
-                #print(f"source_port type: {type(source_port)}")
-                #print(f"dest_port type: {type(dest_port)}")
-                #print(f"length type: {type(length)}")
-                #print(f"checksum type: {type(checksum)}")
-
-                # Pack the UDP header fields
-                udp_header = struct.pack('!HHHH', source_port, dest_port, length, checksum)
-                # Pack additional protocol fields
-                message = struct.pack('!II', sequence_number, sequence_length) + info
-
-                sequence_number += 1
-        
-                # Combine the UDP header with the message
-                datagram = udp_header + message
-
-                print(f"datagram: {datagram}\n")
-        
-                # Send the datagram to the server
-                print("here: "+str(addr)+str(self.server_port))
-                self.UDP_socket.sendto(datagram, addr)
-                #print(f"Datagram sent: Seq: {sequence_number}, Type: {message_type}, Data: {data.decode('utf-8')}")
+            self.UDP_socket.settimeout(5)
+            try:
+                sendMessage(self.UDP_socket, (self.server_ip, self.server_port), self.id, 0)
+                print(f"Sent initial client info to server: {self.id}")
+            except socket.timeout:
+                print(f"Timeout occured!")
+            finally:
+                self.UDP_socket.settimeout(None)
+                break
 
 
 
@@ -118,37 +82,30 @@ class Client:
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
         print(f"Received raw data: {data}")
-        payload = data[16:]
+        payload = data[14:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
-        headers = data[:8]
-        sequence = data[8:16]
-        source_port, dest_port, length, checksum = struct.unpack('!HHHH', headers)
-        sequence_number, sequence_length = struct.unpack('!II', sequence)
+        headers = data[:10]
+        sequence = data[10:14]
+        source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
+        sequence_number, sequence_length = struct.unpack('!HH', sequence)
         print(f"Received data: {payload}\n")
         print(f"Adrr: {addr}\n")
         
         # Verifique se a mensagem contém um ID para processar os dados do cliente
-        if payload.startswith("Ack"):
-            server_info = payload.split(",")
-            server_data = {}
-            
-            # Extraia pares chave:valor do payload
-            for info in server_info:
-                if ":" in info:
-                    key, value = info.split(":", 1)  # Limite de divisão para capturar valores completos
-                    print(value)
-                    server_data[key.strip()] = value.strip()
+        if messageType == 0:
+
 
             # Obtenha os dados do cliente e valide se todos os campos estão presentes
             with self.lock:        
-                self.server_port = int(server_data.get("Port"))
-                print(str(self.server_port)+" here")
+                self.server_port = int(payload)
+                #print(str(self.server_port)+" here")
                 self.connected = True
 
         else:
+            if messageType == 1:
             #with self.lock:
                 time.sleep(3)
-                self.sendMessage(self.UDP_socket, (self.server_ip, self.server_port), "Received")
+                sendMessage(self.UDP_socket, (self.server_ip, self.server_port), "Received", 1)
                 self.sequences[sequence_number] = payload
                 self.sequence += 1
                 print("\nSequence: " + str(self.sequence))
@@ -178,7 +135,7 @@ class Client:
 
                     # Execute Task
 
-                    print(self.server_port)
+                    #print(self.server_port)
 
 
     def to_dict(self):

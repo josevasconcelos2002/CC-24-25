@@ -19,6 +19,7 @@ if __name__ == "__main__":
 
     # Start the server in a separate thread
     server_thread = threading.Thread(target=nms_server.listen_for_datagrams, args=(nms_server.UDP_socket,))
+    server_thread.daemon = True
     server_thread.start()
 
     # Give the server a moment to start up
@@ -28,6 +29,7 @@ if __name__ == "__main__":
     client1 = Client(server_ip, server_port, 'n1')
 
     client1_thread = threading.Thread(target=client1.listen_for_datagrams)
+    client1_thread.daemon = True
     client1_thread.start()
 
     client1.send_initial_info()
@@ -35,6 +37,7 @@ if __name__ == "__main__":
     client2 = Client(server_ip, server_port, 'n2')
 
     client2_thread = threading.Thread(target=client2.listen_for_datagrams)
+    client2_thread.daemon = True
     client2_thread.start()
 
     client2.send_initial_info()
@@ -42,6 +45,7 @@ if __name__ == "__main__":
     client3 = Client(server_ip, server_port, 'n3')
 
     client3_thread = threading.Thread(target=client3.listen_for_datagrams)
+    client3_thread.daemon = True
     client3_thread.start()
 
     client3.send_initial_info()
