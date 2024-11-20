@@ -8,6 +8,7 @@ from misc.sendMessage import sendMessage
 import threading
 import time
 import random
+import subprocess
 
 class Client: 
 
@@ -68,11 +69,34 @@ class Client:
                 print(f"OS error (likely socket issue): {e}")
                 break
 
-
+    def executeTask(self, type):
+        task = type.split()[0]
+        response = subprocess.run([task,type[len(task):]],capture_output=True,text=True)
+        sendMessage(self.UDP_socket, (self.server_ip, self.server_port), response.stdout, 2)
 
     def parseTask(self, sequenceLength):
-        taskList = [self.sequences[i] for i in range(sequenceLength)]
-        return "".join(taskList)
+        taskList = ""
+        for i in range(sequenceLength):
+            taskList = taskList + self.sequences[i] 
+        # Converte a string JSON para um dicionário Python
+        taskDict = json.loads(taskList)
+                        
+        # parse taskString to Task
+        taskId = taskDict["task_id"]
+                        
+        # Chama a função `parseTasks` com o `taskId` e o `taskDict`
+        taskObject = parseTasks(taskId[2:], taskDict)  
+
+        print(taskObject.to_bytes())
+
+        #if taskObject.config.alterflow_conditions.alterflow_conditions == True:
+            #print("True")
+            #iniciar thread the medição de recursos do computador
+        exec_thread = threading.Thread(target=self.executeTask, args=(taskObject.type,))
+        exec_thread.daemon = True
+        exec_thread.start()   
+        #medir(taskObject)   
+        #return "".join(taskList)
 
 
 
@@ -105,31 +129,19 @@ class Client:
             if messageType == 1:
             #with self.lock:
                 time.sleep(3)
-                sendMessage(self.UDP_socket, (self.server_ip, self.server_port), "Received", 1)
                 self.sequences[sequence_number] = payload
                 self.sequence += 1
                 print("\nSequence: " + str(self.sequence))
                 print("Sequence Length: " + str(sequence_length))
                 if self.sequence == sequence_length:
                     # parseTask
-                    taskString = self.parseTask(sequence_length)
-                    print(taskString)
+                    self.parseTask(sequence_length)
+                    #print(taskString)
                     
-                    
-                    # Converte a string JSON para um dicionário Python
-                    taskDict = json.loads(taskString)
-                        
-                    # parse taskString to Task
-                    taskId = taskDict["task_id"]
-                        
-                    # Chama a função `parseTasks` com o `taskId` e o `taskDict`
-                    taskObject = parseTasks(taskId, taskDict)
-                        
-                    # guardar Task no self.Tasks atraves do metodo append
-                    self.Tasks.append(taskObject)
-                    for task in self.Tasks:
-                        print(task.to_dict())
+                    self.sequence = 0
+                    self.sequences = {}
                     # Enviar Ack para o servidor
+                    sendMessage(self.UDP_socket, (self.server_ip, self.server_port),"Received", 0)
 
                     # Criar Threads no cliente : Metrics Thread, AlertFlow Thread , Execute Task Thread
 

@@ -44,7 +44,7 @@ class NMS_server_UDP:
                 if data:
                     #self.handle_datagram(data, addr)
                     
-                    self.currentT -=1
+                    
                     del self.threads[device]
                     print(f"Received data length: {len(data)}")
                     payload = data[14:]
@@ -52,8 +52,12 @@ class NMS_server_UDP:
                     seq = data[10:14]
                     source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
                     sequence_number, sequence_length = struct.unpack('!HH', seq)
-                    sequence += 1
+                    if messageType == 2:
+                        sequence += 1
+                    else:
+                        print(payload.decode('utf-8'))
                     if sequence == sequence_length:
+                        self.currentT -=1
                         received = True
                         print(payload.decode('utf-8')+" hello")
                         with cond:

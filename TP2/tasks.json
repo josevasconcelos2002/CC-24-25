@@ -1,6 +1,6 @@
 [
     {
-        "type": "iperf args",
+        "type": "ping google.com",
         "frequency": 5,
         "duration": 5,
         "devices": ["n1", "n2", "n3"],
@@ -31,7 +31,7 @@
         }
     },
     {
-        "type": "iperf args",
+        "type": "ping google.com",
         "frequency": 5,
         "duration": 5,
         "devices": ["n1", "n5", "n2"],
@@ -62,7 +62,7 @@
         }
     },
     {
-        "type": "iperf args",
+        "type": "ping google.com",
         "frequency": 5,
         "duration": 5,
         "devices": ["n7", "n8", "n9"],
