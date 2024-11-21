@@ -9,6 +9,7 @@ import threading
 import time
 import random
 import subprocess
+import psutil
 
 class Client: 
 
@@ -74,6 +75,35 @@ class Client:
         response = subprocess.run([task,type[len(task):]],capture_output=True,text=True)
         sendMessage(self.UDP_socket, (self.server_ip, self.server_port), response.stdout, 2)
 
+    def medir(self, task):
+        frequency = task.frequency
+        duration = task.duration
+        cpu = 0
+        ram = 0
+        if task.config.device_metrics.cpu_usage == True:
+            cpu = psutil.cpu_percent(interval=0)
+        if task.config.device_metrics.ram_usage == True:
+            ram = psutil.virtual_memory().percent
+        for i in range(0,int(duration/frequency)):
+            for j in range(1,frequency):
+                if cpu != 0:
+                    cpu = cpu + psutil.cpu_percent(interval=0)
+                if ram != 0:
+                    ram = ram + psutil.virtual_memory().percent
+                time.sleep(1)
+            if cpu != 0 and ram != 0:
+                sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + "'%' ram_usage: " + str(ram/(frequency+1)) + '%', 3)
+            else: 
+                if cpu != 0:
+                   sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + '%', 3)
+                else: 
+                    if ram != 0:
+                        sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "ram_usage: " + str(ram/(frequency+1))+ '%', 3)
+
+
+
+
+
     def parseTask(self, sequenceLength):
         taskList = ""
         for i in range(sequenceLength):
@@ -95,7 +125,7 @@ class Client:
         exec_thread = threading.Thread(target=self.executeTask, args=(taskObject.type,))
         exec_thread.daemon = True
         exec_thread.start()   
-        #medir(taskObject)   
+        self.medir(taskObject)   
         #return "".join(taskList)
 
 

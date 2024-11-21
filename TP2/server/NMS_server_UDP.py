@@ -52,6 +52,8 @@ class NMS_server_UDP:
                     seq = data[10:14]
                     source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
                     sequence_number, sequence_length = struct.unpack('!HH', seq)
+                    if messageType == 3:
+                        print(payload.decode('utf-8'))
                     if messageType == 2:
                         sequence += 1
                     else:

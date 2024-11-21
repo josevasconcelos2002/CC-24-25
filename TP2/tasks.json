@@ -1,8 +1,8 @@
 [
     {
         "type": "ping google.com",
-        "frequency": 5,
-        "duration": 5,
+        "frequency": 2,
+        "duration": 4,
         "devices": ["n1", "n2", "n3"],
         "Devices": {
             "devices_metric": {
@@ -32,13 +32,13 @@
     },
     {
         "type": "ping google.com",
-        "frequency": 5,
-        "duration": 5,
+        "frequency": 2,
+        "duration": 4,
         "devices": ["n1", "n5", "n2"],
         "Devices": {
             "devices_metric": {
                 "cpu_usage": true,
-                "ram_usage": false,
+                "ram_usage": true,
                 "interface_stats": ["eth0"]
             },
             "link_metrics": {
