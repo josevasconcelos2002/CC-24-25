@@ -2,6 +2,7 @@ import json
 import socket
 import struct
 import uuid
+from tasks.config import AlterflowConditions
 from tasks.parser import parseTasks
 from tasks.task import Task
 from misc.sendMessage import sendMessage
@@ -75,7 +76,16 @@ class Client:
         response = subprocess.run([task,type[len(task):]],capture_output=True,text=True)
         sendMessage(self.UDP_socket, (self.server_ip, self.server_port), response.stdout, 2)
 
-    def medir(self, task):
+
+
+    def alert_conditions(self,alertFlowConditions: AlterflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float):
+        send_alert = False
+        if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage):
+            send_alert = True
+
+
+    def medir(self, task: Task):
+        task_id = task.task_id
         frequency = task.frequency
         duration = task.duration
         cpu = 0
@@ -99,6 +109,20 @@ class Client:
                 else: 
                     if ram != 0:
                         sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "ram_usage: " + str(ram/(frequency+1))+ '%', 3)
+        
+        if task.config.alterflow_conditions.alterflow_conditions == True :
+            print("\nDO WE NEED TO ALERT SERVER ?\n")
+            print(f"\nCPU usage % : {cpu/(frequency+1)}\n")
+            print(f"CPU alertFlow conditions % : {task.config.alterflow_conditions.cpu_usage}\n")
+            print(f"\nRAM usage % : {ram/(frequency+1)}\n")
+            print(f"RAM alertFlow conditions % : {task.config.alterflow_conditions.ram_usage}\n")
+        
+            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions,cpu/(frequency+1), ram/(frequency+1))
+            if(send_alert_notification):
+                #send  a alert TCP datagram 
+                print("\nALERT! CLIENT MUST SEND A ALERT TO THE SERVER\n")
+
+            
 
 
 

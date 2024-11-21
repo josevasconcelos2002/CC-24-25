@@ -21,9 +21,9 @@
                 "packet_count": 10
             },
             "AlterFlowConditions": {
-                "alterflow": false,
+                "alterflow": true,
                 "cpu_usage": 80,
-                "ram_usage": 90,
+                "ram_usage": 30,
                 "interface_stats": 2000,
                 "packet_loss": 5,
                 "jitter": 100
@@ -85,7 +85,7 @@
             "AlterFlowConditions": {
                 "alterflow": true,
                 "cpu_usage": 80,
-                "ram_usage": 90,
+                "ram_usage": 30,
                 "interface_stats": 2000,
                 "packet_loss": 5,
                 "jitter": 100
