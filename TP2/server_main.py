@@ -13,7 +13,7 @@ if __name__ == "__main__":
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
-    server_ip='127.0.0.1'
+    server_ip='10.0.1.2'
     server_port=54321
 
 

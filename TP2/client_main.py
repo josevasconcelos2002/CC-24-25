@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     print(f"Argumento 1: {arg1}")
 
-    server_ip='127.0.0.1'
+    server_ip='0.0.0.0'
     server_port=54321
     
     client1 = Client(server_ip, server_port, arg1 )

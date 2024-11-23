@@ -21,7 +21,7 @@ class NMS_server:
         self.waitingTasks = {}
         self.currentTask = 1
         self.clients = Clients()
-        self.UDP_socket = self.setup_UDP_socket(('127.0.0.1', 54321))  # Initialize the UDP socket
+        self.UDP_socket = self.setup_UDP_socket(('', 54321))  # Initialize the UDP socket
         self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
         self.threads = []
         self.cond = threading.Condition()
@@ -42,7 +42,7 @@ class NMS_server:
     def setup_TCP_socket(self):
         # Creates a TCP socket
         TCP_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        TCP_socket.bind(('127.0.0.1', 54322))
+        TCP_socket.bind(('', 54322))
         return TCP_socket
 
 

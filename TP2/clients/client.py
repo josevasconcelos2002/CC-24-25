@@ -35,7 +35,7 @@ class Client:
     def setup_UDP_socket(self):
         # Create a UDP socket
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.bind(('127.0.0.'+ str(random.randint(2, 100)), random.randint(1, 65535)))
+        udp_socket.bind(('', random.randint(1, 65535)))
         return udp_socket
     
 
