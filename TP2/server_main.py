@@ -14,6 +14,7 @@ if __name__ == "__main__":
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
+    # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
     storage_path = "storage"
     if os.path.exists(storage_path):
         shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo

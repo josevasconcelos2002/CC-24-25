@@ -23,6 +23,7 @@ class NMS_server_UDP:
 
     def write_info(self, task_id, device_id, info):
         
+        # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
         storage_path = "storage"
         if not os.path.exists(storage_path):
             os.makedirs(storage_path)
@@ -37,10 +38,6 @@ class NMS_server_UDP:
 
         with open(file_path, "w") as file:
             file.write(f"{info}\n")
-
-        with open(file_path, "r") as file:
-            read_info = file.read()
-            print(read_info)
 
 
 
