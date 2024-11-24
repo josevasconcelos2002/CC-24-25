@@ -45,25 +45,31 @@ class NMS_server_UDP:
                     #self.handle_datagram(data, addr)
                     
                     
-                    del self.threads[device]
+                    
                     print(f"Received data length: {len(data)}")
                     payload = data[14:]
                     headers = data[:10]
                     seq = data[10:14]
                     source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
                     sequence_number, sequence_length = struct.unpack('!HH', seq)
+                    print(payload.decode('utf-8'))
                     if messageType == 3:
                         print(payload.decode('utf-8'))
                     if messageType == 2:
+                        print(payload.decode('utf-8'))
                         sequence += 1
+                    """    
                     else:
                         print(payload.decode('utf-8'))
-                    if sequence == sequence_length:
+                    """
+                    if sequence == sequence_length: 
+                        del self.threads[device]
                         self.currentT -=1
                         received = True
                         print(payload.decode('utf-8')+" hello")
                         with cond:
                             cond.notify()
+                    
             except socket.timeout:
                 print(f"Timeout occured in {addr}!")
                 sequence = 0
@@ -74,5 +80,5 @@ class NMS_server_UDP:
             except OSError as e:
                 print(f"OS error (likely socket issue): {e}")
                 break
-            finally:
-                break
+            #finally:
+                #break

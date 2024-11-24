@@ -127,6 +127,7 @@ class NMS_server:
             try:
                 print(f"Server listening:\n")
                 data, addr = socket.recvfrom(buffer_size)
+                print(f'Data received')
                 if data:
                     self.handle_datagram(data, addr)
             except ConnectionResetError as e:
@@ -147,6 +148,9 @@ class NMS_server:
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
         print(f"Received data: {payload}\n")
         print(f"Adrr: {addr}\n")
+        if messageType == 2:
+            print(f"Received data: {payload}\n")
+
         
         # Verifique se a mensagem contém um ID para processar os dados do cliente
         if messageType == 0:
@@ -157,7 +161,7 @@ class NMS_server:
 
             port = self.createPort()
 
-            socket = self.setup_UDP_socket(('127.0.0.1', port))
+            socket = self.setup_UDP_socket(('0.0.0.0', port))
 
             sendMessage(socket, client_addr, str(port), 0)
 
@@ -178,6 +182,8 @@ class NMS_server:
                         task_thread.daemon = True
                         task_thread.start()
                         self.threads.append(task_thread)
+                    else: 
+                        print("Erro. Length not valid")
                 
             else:
                 print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")

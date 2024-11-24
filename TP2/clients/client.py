@@ -11,6 +11,7 @@ import time
 import random
 import subprocess
 import psutil
+import shlex
 
 class Client: 
 
@@ -35,25 +36,17 @@ class Client:
     def setup_UDP_socket(self):
         # Create a UDP socket
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_socket.bind(('', random.randint(1, 65535)))
+        udp_socket.bind(('0.0.0.0', random.randint(1, 65535)))
         return udp_socket
     
 
     def send_initial_info(self):
         while self.connected == False and not self._stop_event.is_set():
-
-        
             # Send this message to the server over UDP
-            self.UDP_socket.settimeout(5)
-            try:
                 sendMessage(self.UDP_socket, (self.server_ip, self.server_port), self.id, 0)
                 print(f"Sent initial client info to server: {self.id}")
-            except socket.timeout:
-                print(f"Timeout occured!")
-            finally:
-                self.UDP_socket.settimeout(None)
-                break
-
+                time.sleep(5)
+           
 
 
     def listen_for_datagrams(self):
@@ -71,13 +64,31 @@ class Client:
                 print(f"OS error (likely socket issue): {e}")
                 break
 
-    def executeTask(self, type):
-        task = type.split()[0]
-        response = subprocess.run([task,type[len(task):]],capture_output=True,text=True)
-        sendMessage(self.UDP_socket, (self.server_ip, self.server_port), response.stdout, 2)
+    def executeTask(self, command:str):
+        try:
+            # Split the command safely
+            args = shlex.split(command)
+        
+        # Execute the command and capture output
+            response = subprocess.run(args, capture_output=True, text=True)
+        
+        # Check for errors
+            if response.returncode != 0:
+                output = f"Error: {response.stderr}"
+            else:
+                output = response.stdout
+        
+        # Send the response via UDP
+            
+            sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
+    
+        except Exception as e:
+        # Handle unexpected exceptions
+            error_message = f"An error occurred: {str(e)}"
+            sendMessage(self.UDP_socket, (self.server_ip, self.server_port), error_message, 2)
 
 
-
+    
     def alert_conditions(self,alertFlowConditions: AlterflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float):
         send_alert = False
         if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage):
@@ -90,11 +101,17 @@ class Client:
         duration = task.duration
         cpu = 0
         ram = 0
+        """
         if task.config.device_metrics.cpu_usage == True:
             cpu = psutil.cpu_percent(interval=0)
         if task.config.device_metrics.ram_usage == True:
             ram = psutil.virtual_memory().percent
+        """
         for i in range(0,int(duration/frequency)):
+            if task.config.device_metrics.cpu_usage == True:
+             cpu = psutil.cpu_percent(interval=0)
+            if task.config.device_metrics.ram_usage == True:
+             ram = psutil.virtual_memory().percent
             for j in range(1,frequency):
                 if cpu != 0:
                     cpu = cpu + psutil.cpu_percent(interval=0)
@@ -102,12 +119,15 @@ class Client:
                     ram = ram + psutil.virtual_memory().percent
                 time.sleep(1)
             if cpu != 0 and ram != 0:
+                
                 sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + "'%' ram_usage: " + str(ram/(frequency+1)) + '%', 3)
             else: 
                 if cpu != 0:
-                   sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + '%', 3)
+                   
+                    sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + '%', 3)
                 else: 
                     if ram != 0:
+                        
                         sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "ram_usage: " + str(ram/(frequency+1))+ '%', 3)
         
         if task.config.alterflow_conditions.alterflow_conditions == True :
@@ -149,14 +169,17 @@ class Client:
         exec_thread = threading.Thread(target=self.executeTask, args=(taskObject.type,))
         exec_thread.daemon = True
         exec_thread.start()   
-        self.medir(taskObject)   
+        self.medir(taskObject)
+        """
+        medir_thread = threading.Thread(target=self.medir, args=(taskObject,))
+        medir_thread.daemon = True
+        medir_thread.start()
+        """
+
         #return "".join(taskList)
 
 
 
-
-
-    
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
         print(f"Received raw data: {data}")
