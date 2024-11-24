@@ -12,6 +12,7 @@ import random
 import subprocess
 import psutil
 import shlex
+import os
 
 class Client: 
 
@@ -157,6 +158,19 @@ class Client:
                         
         # parse taskString to Task
         taskId = taskDict["task_id"]
+
+        # Verifica se o diretório "storage" existe, caso contrário cria
+        storage_path = "storage"
+        if not os.path.exists(storage_path):
+            os.makedirs(storage_path)
+        
+        # Verifica e cria o subdiretório com o nome do "task_id"
+        task_dir = os.path.join(storage_path, str(taskId))
+        if not os.path.exists(task_dir):
+            os.makedirs(task_dir)
+
+        file_name = f"{self.id}.txt"
+        file_path = os.path.join(task_dir, file_name)
                         
         # Chama a função `parseTasks` com o `taskId` e o `taskDict`
         taskObject = parseTasks(taskId[2:], taskDict)  

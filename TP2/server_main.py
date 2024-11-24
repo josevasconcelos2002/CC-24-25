@@ -1,3 +1,4 @@
+import shutil
 from server.NMS_server import NMS_server
 from clients.client import Client
 import os
@@ -23,3 +24,8 @@ if __name__ == "__main__":
     server_thread.start()
 
     time.sleep(20)
+    
+    storage_path = "storage"
+    if os.path.exists(storage_path):
+        shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo
+        print(f'Diretório "{storage_path}" e seu conteúdo foram removidos.')
