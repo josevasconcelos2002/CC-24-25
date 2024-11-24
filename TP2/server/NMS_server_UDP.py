@@ -38,6 +38,10 @@ class NMS_server_UDP:
         with open(file_path, "w") as file:
             file.write(f"{info}\n")
 
+        with open(file_path, "r") as file:
+            read_info = file.read()
+            print(read_info)
+
 
 
     def listen_for_datagrams(self, cond, device: Client, socket, addr, task: Task):
