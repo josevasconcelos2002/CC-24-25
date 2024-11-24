@@ -14,6 +14,11 @@ if __name__ == "__main__":
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
+    # reset storage
+    storage_path = "storage"
+    if os.path.exists(storage_path):
+        shutil.rmtree(storage_path)
+
     server_ip='127.0.0.1'
     server_port=54321
 
@@ -75,9 +80,3 @@ if __name__ == "__main__":
     nms_server.close()
 
     server_thread.join()
-
-    # Remove the "storage" directory and its contents
-    storage_path = "storage"
-    if os.path.exists(storage_path):
-        shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo
-        print(f'Diretório "{storage_path}" e seu conteúdo foram removidos.')

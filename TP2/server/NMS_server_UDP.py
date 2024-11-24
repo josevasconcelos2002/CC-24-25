@@ -1,7 +1,9 @@
 import json
+import os
 import socket
 import struct
 import threading
+from clients.client import Client
 from tasks.config import Config, Device_metrics, AlterflowConditions, LatencyConfig, Link_metrics
 from tasks.task import Task
 from tasks.tasks import Tasks
@@ -19,8 +21,26 @@ class NMS_server_UDP:
         self.threads = {}
 
 
+    def write_info(self, task_id, device_id, info):
+        
+        storage_path = "storage"
+        if not os.path.exists(storage_path):
+            os.makedirs(storage_path)
+        
+        # Verifica e cria o subdiretório com o nome do "task_id"
+        task_dir = os.path.join(storage_path, str(task_id))
+        if not os.path.exists(task_dir):
+            os.makedirs(task_dir)
 
-    def listen_for_datagrams(self, cond, device, socket, addr, task):
+        file_name = f"{device_id}.txt"
+        file_path = os.path.join(task_dir, file_name)
+
+        with open(file_path, "w") as file:
+            file.write(f"{info}\n")
+
+
+
+    def listen_for_datagrams(self, cond, device: Client, socket, addr, task: Task):
         buffer_size = 1024
         if self.currentT == self.maxT:
             cond.wait()
@@ -54,9 +74,11 @@ class NMS_server_UDP:
                     sequence_number, sequence_length = struct.unpack('!HH', seq)
                     print(payload.decode('utf-8'))
                     if messageType == 3:
-                        print(payload.decode('utf-8'))
+                        print(f"\nMETRICS: {payload.decode('utf-8')}\n")
+                        self.write_info(task.task_id, device,  f"METRICS: {payload.decode('utf-8')}\n")
                     if messageType == 2:
-                        print(payload.decode('utf-8'))
+                        print(f"\nRESULTS: {payload.decode('utf-8')}\n")
+                        self.write_info(task.task_id, device, f"RESULTS: {payload.decode('utf-8')}\n")
                         sequence += 1
                     """    
                     else:
