@@ -21,7 +21,7 @@ class NMS_server_UDP:
         self.threads = {}
 
 
-    def write_info(self, task_id, device_id, info):
+    def write_info(self, task_id, device_id):
         
         # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
         storage_path = "storage"
@@ -36,8 +36,8 @@ class NMS_server_UDP:
         file_name = f"{device_id}.txt"
         file_path = os.path.join(task_dir, file_name)
 
-        with open(file_path, "w") as file:
-            file.write(f"{info}\n")
+        file = open(file_path, "w")
+        return file
 
 
 
@@ -50,6 +50,7 @@ class NMS_server_UDP:
         received = False
         socket.settimeout(30)
         sendMessage(socket, addr, task.to_bytes(), 1)
+        file = self.write_info(task.task_id, device)
         while not received:
             try:
                 print(f"Server client listening:\n")
@@ -76,11 +77,14 @@ class NMS_server_UDP:
                     print(payload.decode('utf-8'))
                     if messageType == 3:
                         print(f"\nMETRICS: {payload.decode('utf-8')}\n")
-                        self.write_info(task.task_id, device,  f"METRICS: {payload.decode('utf-8')}\n")
-                    if messageType == 2:
+                        file.write(f"METRICS: {payload.decode('utf-8')}\n")
+                    else: 
+
+                     if messageType == 2:
                         print(f"\nRESULTS: {payload.decode('utf-8')}\n")
-                        self.write_info(task.task_id, device, f"RESULTS: {payload.decode('utf-8')}\n")
+                        file.write( f"RESULTS: {payload.decode('utf-8')}\n")
                         sequence += 1
+                
                     """    
                     else:
                         print(payload.decode('utf-8'))

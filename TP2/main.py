@@ -15,9 +15,9 @@ if __name__ == "__main__":
     nms_server.parse_json(json_path)
 
     # reset storage
-    storage_path = "storage"
-    if os.path.exists(storage_path):
-        shutil.rmtree(storage_path)
+    #storage_path = "storage"
+    #if os.path.exists(storage_path):
+        #shutil.rmtree(storage_path)
 
     server_ip='127.0.0.1'
     server_port=54321

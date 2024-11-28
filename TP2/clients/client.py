@@ -74,14 +74,15 @@ class Client:
             response = subprocess.run(args, capture_output=True, text=True)
         
         # Check for errors
-            if response.returncode != 0:
-                output = f"Error: {response.stderr}"
-            else:
-                output = response.stdout
+            #if response.returncode != 0:
+                #output = f"Error: {response.stderr}"
+            #else:
+                #output = response.stdout
         
         # Send the response via UDP
+            time.sleep(5)
+            sendMessage(self.UDP_socket, (self.server_ip, self.server_port), response.stdout, 2) 
             
-            sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
     
         except Exception as e:
         # Handle unexpected exceptions
