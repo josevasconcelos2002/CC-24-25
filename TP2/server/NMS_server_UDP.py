@@ -23,12 +23,12 @@ class NMS_server_UDP:
 
     def write_info(self, task_id, device_id):
         
-        # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
-        storage_path = "storage"
+        storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"  # utilizar um path parecido no core
+        #storage_path = "storage"
         if not os.path.exists(storage_path):
             os.makedirs(storage_path)
         
-        # Verifica e cria o subdiretório com o nome do "task_id"
+        # Verifica e cria o subdiretÃ³rio com o nome do "task_id"
         task_dir = os.path.join(storage_path, str(task_id))
         if not os.path.exists(task_dir):
             os.makedirs(task_dir)
@@ -36,9 +36,8 @@ class NMS_server_UDP:
         file_name = f"{device_id}.txt"
         file_path = os.path.join(task_dir, file_name)
 
-        file = open(file_path, "w")
+        file = open(file_path, "a")
         return file
-
 
 
     def listen_for_datagrams(self, cond, device: Client, socket, addr, task: Task):
@@ -54,7 +53,7 @@ class NMS_server_UDP:
         while not received:
             try:
                 print(f"Server client listening:\n")
-                data, addr = socket.recvfrom(buffer_size)
+                data, addre = socket.recvfrom(buffer_size)
                 #time.sleep(0.5)
                 #print("stopping")
                 #received = True
@@ -78,17 +77,20 @@ class NMS_server_UDP:
                     if messageType == 3:
                         print(f"\nMETRICS: {payload.decode('utf-8')}\n")
                         file.write(f"METRICS: {payload.decode('utf-8')}\n")
+                        file.flush()
                     else: 
 
                      if messageType == 2:
                         print(f"\nRESULTS: {payload.decode('utf-8')}\n")
                         file.write( f"RESULTS: {payload.decode('utf-8')}\n")
+                        file.flush()
                         sequence += 1
                 
                     """    
                     else:
                         print(payload.decode('utf-8'))
                     """
+                    print(f"Sequence: {sequence}\n Sequence_length: {sequence_length}")
                     if sequence == sequence_length: 
                         del self.threads[device]
                         self.currentT -=1
@@ -97,7 +99,9 @@ class NMS_server_UDP:
                         with cond:
                             cond.notify()
                     
-            except socket.timeout:
+            except Exception as e:
+               print(e)
+               if "timed out" in str(e).lower():
                 print(f"Timeout occured in {addr}!")
                 sequence = 0
                 sendMessage(socket, addr, task.to_bytes(), 1)

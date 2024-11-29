@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     print(f"Argumento 1: {arg1}")
 
-    server_ip='10.0.3.2'
+    server_ip='10.0.1.10'
     server_port=54321
     
     client1 = Client(server_ip, server_port, arg1 )
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     client1.send_initial_info()
 
-    time.sleep(20)
+    time.sleep(150)
 
     client1.close()
     client1_thread.join()
