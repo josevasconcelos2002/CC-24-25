@@ -1,6 +1,6 @@
 [
     {
-        "type": "ping -c 5 10.0.1.10",
+        "type": "ping -c 5 10.0.3.2",
         "frequency": 2,
         "duration": 4,
         "devices": ["n1", "n2", "n3"],
@@ -22,8 +22,8 @@
             },
             "AlterFlowConditions": {
                 "alterflow": true,
-                "cpu_usage": 80,
-                "ram_usage": 30,
+                "cpu_usage": 1,
+                "ram_usage": 1,
                 "interface_stats": 2000,
                 "packet_loss": 5,
                 "jitter": 100
@@ -31,7 +31,7 @@
         }
     },
     {
-        "type": "traceroute 10.0.1.10",
+        "type": "traceroute 10.0.3.2",
         "frequency": 2,
         "duration": 4,
         "devices": ["n1", "n5", "n2"],
@@ -52,9 +52,9 @@
                 "packet_count": 10
             },
             "AlterFlowConditions": {
-                "alterflow": false,
-                "cpu_usage": 80,
-                "ram_usage": 90,
+                "alterflow": true,
+                "cpu_usage": 1,
+                "ram_usage": 1,
                 "interface_stats": 2000,
                 "packet_loss": 5,
                 "jitter": 100
@@ -62,7 +62,7 @@
         }
     },
     {
-        "type": "ping -c 15 10.0.3.2",
+        "type": "ping -c 3 10.0.3.2",
         "frequency": 5,
         "duration": 5,
         "devices": ["n7", "n8", "n9"],
@@ -84,8 +84,8 @@
             },
             "AlterFlowConditions": {
                 "alterflow": true,
-                "cpu_usage": 80,
-                "ram_usage": 30,
+                "cpu_usage": 1,
+                "ram_usage": 1,
                 "interface_stats": 2000,
                 "packet_loss": 5,
                 "jitter": 100

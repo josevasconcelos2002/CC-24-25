@@ -10,6 +10,8 @@ from clients.clients import Clients
 from clients.client_server import ClientServer
 from server.NMS_server_UDP import NMS_server_UDP
 from misc.sendMessage import sendMessage
+from misc.openFile import openFile
+
 import random
 import time
 
@@ -22,7 +24,7 @@ class NMS_server:
         self.currentTask = 1
         self.clients = Clients()
         self.UDP_socket = self.setup_UDP_socket(('', 54321))  # Initialize the UDP socket
-        self.TCP_socket = self.setup_TCP_socket()  # Initialize the TCP socket
+        self.TCP_socket = self.setup_TCP_socket(('', 54322))  # Initialize the TCP socket
         self.threads = []
         self.cond = threading.Condition()
         self.lock = threading.Lock()
@@ -39,10 +41,12 @@ class NMS_server:
         udp_socket.bind(addr)  # Bind to localhost and a specified port
         return udp_socket
     
-    def setup_TCP_socket(self):
+    def setup_TCP_socket(self, addr):
         # Creates a TCP socket
         TCP_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        TCP_socket.bind(('', 54322))
+        TCP_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        TCP_socket.bind(addr)
         return TCP_socket
 
 
@@ -197,3 +201,41 @@ class NMS_server:
             # Close the socket
             self.UDP_socket.close()
             self.TCP_socket.close()
+
+    def handle_client(self , conn, addr):
+        """Function to handle communication with a single client."""
+        print('Connected by', addr)
+        file = None
+        with conn:
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                 break
+                headers = data[:2]
+                messageType = struct.unpack('!H',headers)
+
+                decoded_data = data[2:].decode('utf-8')
+                print(f'Aqui está a message tpye: {messageType}')
+
+                if messageType[0] == 1:
+                    print(f'Aqui está a decoded data: {decoded_data}')
+                    info = decoded_data.split()
+                    file = openFile(info[0], info[1])
+                else:
+                    print(f'Aqui está a decoded data: {decoded_data}')
+                    file.write(f"AlterFlow: {decoded_data}\n")
+                    file.flush()
+
+        print(f"Connection with {addr} closed.")
+
+    def listen_TCP(self, socket):
+        #s.listen()
+        self.TCP_socket.listen()
+        
+        print(f"TCP a ouvir")
+        while True:
+            conn, addr = self.TCP_socket.accept()
+            # Start a new thread to handle the client
+            client_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+            client_thread.daemon = True  # Ensures threads close when the main program exits
+            client_thread.start()

@@ -28,5 +28,9 @@ if __name__ == "__main__":
     server_thread = threading.Thread(target=nms_server.listen_for_datagrams, args=(nms_server.UDP_socket,))
     server_thread.daemon = True
     server_thread.start()
+    
+    server1_thread = threading.Thread(target=nms_server.listen_TCP, args=(nms_server.TCP_socket,)) 
+    server1_thread.daemon = True
+    server1_thread.start()
 
     time.sleep(150)
