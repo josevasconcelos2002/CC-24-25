@@ -9,7 +9,7 @@ from tasks.tasks import Tasks
 from clients.clients import Clients
 from clients.client_server import ClientServer
 from server.NMS_server_UDP import NMS_server_UDP
-from misc.sendMessage import sendMessage
+from misc.sendMessage import sendMessage, openFile
 import random
 import time
 
@@ -39,10 +39,10 @@ class NMS_server:
         udp_socket.bind(addr)  # Bind to localhost and a specified port
         return udp_socket
     
-    def setup_TCP_socket(self):
+    def setup_TCP_socket(self, addr):
         # Creates a TCP socket
         TCP_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        TCP_socket.bind(('', 54322))
+        TCP_socket.bind(addr)
         return TCP_socket
 
 
@@ -197,3 +197,33 @@ class NMS_server:
             # Close the socket
             self.UDP_socket.close()
             self.TCP_socket.close()
+
+    def handle_client(conn, addr):
+        """Function to handle communication with a single client."""
+        print('Connected by', addr)
+        file = None
+        with conn:
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                break
+                headers = data[:2]
+                decoded_data = data[2:].decode('utf-8')
+                if messageType == 1:
+                    info = decoded_data.split()
+                    file = openFile(info[0], info[1])
+                else:
+                    file.write(f"AlterFlow: {decoded_data}\n")
+                    file.flush()
+
+        print(f"Connection with {addr} closed.")
+
+    def listen_TCP(self, socket):
+        s.listen()
+        print(f"Server listening on {HOST}:{PORT}")
+        while True:
+            conn, addr = s.accept()
+            # Start a new thread to handle the client
+            client_thread = threading.Thread(target=handle_client, args=(conn, addr))
+            client_thread.daemon = True  # Ensures threads close when the main program exits
+            client_thread.start()

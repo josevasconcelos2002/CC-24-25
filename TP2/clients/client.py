@@ -13,6 +13,7 @@ import subprocess
 import psutil
 import shlex
 import os
+from datetime import datetime
 
 class Client: 
 
@@ -22,13 +23,14 @@ class Client:
         self.server_ip = server_ip
         self.server_port = server_port
         self.UDP_socket = self.setup_UDP_socket()
-        self.TCP_socket = None  # socket TCP só é criado quando necessário
+        self.TCP_socket = self.setup_TCP_socket()  # socket TCP só é criado quando necessário
         self.Tasks = []
         self.connected = False
         self.lock = threading.Lock()
         self._stop_event = threading.Event()
         self.sequences = {}
         self.sequence = 0
+        self.doingTask = False
 
 
 
@@ -39,6 +41,12 @@ class Client:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.bind(('0.0.0.0', random.randint(1, 65535)))
         return udp_socket
+
+    def setup_TCP_socket(self):
+        # Create a UDP socket
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.bind(('0.0.0.0', random.randint(1, 65535)))
+        return tcp_socket
     
 
     def send_initial_info(self):
@@ -66,6 +74,8 @@ class Client:
                 break
 
     def executeTask(self, command:str):
+        with self.lock:
+            self.doingTask = True
         try:
             # Split the command safely
             args = shlex.split(command)
@@ -83,6 +93,8 @@ class Client:
             time.sleep(5)
             output = response.stdout
             sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
+            with self.lock:
+                self.doingTask = False
     
         except Exception as e:
         # Handle unexpected exceptions
@@ -145,8 +157,20 @@ class Client:
                 print("\nALERT! CLIENT MUST SEND A ALERT TO THE SERVER\n")
 
             
+    def alterFlow(self, task):
+        message =  struct.pack('!H', 1) + task.task_id + self.id
+        self.TCP_socket.send(message)
+        while self.doingTask == True:
+            cpu = psutil.cpu_percent(interval=1)  
+            ram = psutil.virtual_memory().percent          
+            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions,cpu, ram)
+            if(send_alert_notification):
+                time = datetime.now()
+                message =  struct.pack('!H', 1) + time + '\n' + cpu + '\n' + 'ram' + '\n'
+                self.TCP_socket.send(message)
+        self.TCP_socket.close()
 
-
+                
 
 
 
@@ -166,12 +190,14 @@ class Client:
 
         print(taskObject.to_bytes())
 
-        #if taskObject.config.alterflow_conditions.alterflow_conditions == True:
-            #print("True")
-            #iniciar thread the medição de recursos do computador
         exec_thread = threading.Thread(target=self.executeTask, args=(taskObject.type,))
         exec_thread.daemon = True
-        exec_thread.start()   
+        exec_thread.start()
+        if taskObject.config.alterflow_conditions.alterflow_conditions == True:
+            self.TCP_socket.connect((self.server_ip, self.server_port))
+            alter_thread = threading.Thread(target=self.alterFlow, args=(taskObject,))
+            alter_thread.daemon = True
+            alter_thread.start()   
         self.medir(taskObject)
         """
         medir_thread = threading.Thread(target=self.medir, args=(taskObject,))
