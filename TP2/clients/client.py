@@ -99,6 +99,8 @@ class Client:
                 print ("TCP SOCKET FECHADA")
                 
             sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
+            with self.lock:
+                self.doingTask = False
     
     
         except Exception as e:
@@ -178,57 +180,55 @@ class Client:
     """
     
     def alterFlow(self, task):
-     message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + " ".encode('utf-8') + self.id.encode('utf-8') + b'\n'
-     self.TCP_socket.sendall(message)
-    
-     while self.doingTask:
-         cpu = psutil.cpu_percent(interval=1)  
-         ram = psutil.virtual_memory().percent          
-         send_alert_notification = self.alert_conditions(task.config.alterflow_conditions, cpu, ram)
-        
-         if send_alert_notification:
-             current_time = str(datetime.now())
-             try:
-                 message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + str(cpu).encode('utf-8') + b'\n' + str(ram).encode('utf-8')+ b'\n'
-                 
-                 self.TCP_socket.sendall(message)
-                 
-             except socket.error as e:
-                 print(f"Socket send error: {e}")
-                 break  # stop further attempts on errors
-         time.sleep(1)  # avoid maxing out resource poll
-     self.TCP_socket.close()
-    
+        message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + b" " + self.id.encode('utf-8') + b'\n'
+        self.TCP_socket.sendall(message)
 
-                
+        while self.doingTask:
+            cpu = psutil.cpu_percent(interval=1)  
+            ram = psutil.virtual_memory().percent          
+            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions, cpu, ram)
+
+            if send_alert_notification:
+                current_time = str(datetime.now())
+                try:
+                    message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + str(cpu).encode('utf-8') + b'\n' + str(ram).encode('utf-8') + b'\n'
+                    self.TCP_socket.sendall(message)
+                except socket.error as e:
+                    print(f"Socket send error: {e}")
+                    break  # stop further attempts on errors
+            time.sleep(1)  # Avoid overloading resource polling
+        self.TCP_socket.close()
+
 
 
 
     def parseTask(self, sequenceLength):
         taskList = ""
         for i in range(sequenceLength):
-            taskList = taskList + self.sequences[i] 
+            taskList += self.sequences[i] 
         # Converte a string JSON para um dicionário Python
         taskDict = json.loads(taskList)
-                        
-        # parse taskString to Task
-        taskId = taskDict["task_id"]
 
-                        
-        # Chama a função `parseTasks` com o `taskId` e o `taskDict`
-        taskObject = parseTasks(taskId[2:], taskDict)  
+        # Parse taskString to Task
+        taskId = taskDict["task_id"]
+        taskObject = parseTasks(taskId[2:], taskDict)
 
         print(taskObject.to_bytes())
-        if taskObject.config.alterflow_conditions.alterflow_conditions == True:
+        if taskObject.config.alterflow_conditions.alterflow_conditions:
             self.TCP_socket.connect((self.server_ip, 54322))
+
+        # Inicia as threads necessárias
         exec_thread = threading.Thread(target=self.executeTask, args=(taskObject.type,))
         exec_thread.daemon = True
         exec_thread.start()
-        if taskObject.config.alterflow_conditions.alterflow_conditions == True:
+
+        if taskObject.config.alterflow_conditions.alterflow_conditions:
             alter_thread = threading.Thread(target=self.alterFlow, args=(taskObject,))
             alter_thread.daemon = True
-            alter_thread.start()   
+            alter_thread.start()
+
         self.medir(taskObject)
+
         """
         medir_thread = threading.Thread(target=self.medir, args=(taskObject,))
         medir_thread.daemon = True
