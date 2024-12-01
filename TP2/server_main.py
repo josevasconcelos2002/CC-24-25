@@ -7,39 +7,37 @@ import threading
 import sys
 
 if __name__ == "__main__":
-    # Initialize the NMS server
-    if len(sys.argv) < 1:
+    # Verifica se o argumento foi fornecido
+    if len(sys.argv) < 2:  # sys.argv[1] espera o argumento 1 como storage_path
         print("Necessita de fornecer o storage_path!")
         sys.exit(1)
 
+    # Obter e ajustar o caminho do storage_path
     storage_path = sys.argv[1]
-    print(f"Storage_path: {storage_path}")
+    if not storage_path.endswith("/storage"):
+        storage_path = os.path.join(storage_path, "storage")
+    print(f"Storage_path ajustado: {storage_path}")
 
-
+    # Inicializar o servidor NMS
     nms_server = NMS_server(storage_path)
 
-    # Load tasks from JSON
+    # Carregar tarefas do JSON
     current_dir = os.path.dirname(__file__)
     json_path = os.path.join(current_dir, "tasks.json")
     nms_server.parse_json(json_path)
 
-    # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
-    #storage_path = "storage"
-    #if os.path.exists(storage_path):
-        #shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo
-        #print(f'Diretório "{storage_path}" e seu conteúdo foram removidos.')
+    # Configuração de IP e porta do servidor
+    server_ip = '0.0.0.0'
+    server_port = 54321
 
-    server_ip='0.0.0.0'
-    server_port=54321
-
-
-    # Start the server in a separate thread
+    # Iniciar o servidor em uma thread separada
     server_thread = threading.Thread(target=nms_server.listen_for_datagrams, args=(nms_server.UDP_socket,))
     server_thread.daemon = True
     server_thread.start()
     
-    server1_thread = threading.Thread(target=nms_server.listen_TCP, args=(nms_server.TCP_socket,)) 
+    server1_thread = threading.Thread(target=nms_server.listen_TCP, args=(nms_server.TCP_socket,))
     server1_thread.daemon = True
     server1_thread.start()
 
+    # Tempo de execução
     time.sleep(150)

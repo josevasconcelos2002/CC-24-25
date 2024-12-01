@@ -221,7 +221,7 @@ class NMS_server:
                 if messageType[0] == 1:
                     print(f'Aqui está a decoded data: {decoded_data}')
                     info = decoded_data.split()
-                    file = openFile(info[0], info[1])
+                    file = openFile(info[0], info[1], self.storage_path)
                 else:
                     print(f'Aqui está a decoded data: {decoded_data}')
                     file.write(f"AlterFlow: {decoded_data}\n")
