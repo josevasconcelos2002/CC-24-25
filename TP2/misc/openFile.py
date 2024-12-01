@@ -1,10 +1,10 @@
 import os
 
-def openFile( task_id, device_id):
+def openFile( task_id, device_id, storage_path):
         
         # Tomas -> storage_path = "/home/core/Documents/storage"  
-        storage_path = "/home/core/Downloads/CC-24-25/TP2/storage"  
-        #storage_path = "storage"
+        #storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"
+        #  
         if not os.path.exists(storage_path):
             os.makedirs(storage_path)
         

@@ -4,10 +4,19 @@ from clients.client import Client
 import os
 import time
 import threading
+import sys
 
 if __name__ == "__main__":
     # Initialize the NMS server
-    nms_server = NMS_server()
+    if len(sys.argv) < 1:
+        print("Necessita de fornecer o storage_path!")
+        sys.exit(1)
+
+    storage_path = sys.argv[1]
+    print(f"Storage_path: {storage_path}")
+
+
+    nms_server = NMS_server(storage_path)
 
     # Load tasks from JSON
     current_dir = os.path.dirname(__file__)
@@ -15,10 +24,10 @@ if __name__ == "__main__":
     nms_server.parse_json(json_path)
 
     # storage_path = "/home/core/Downloads/CC-24-25-main/TP2/storage"   utilizar um path parecido no core
-    storage_path = "storage"
-    if os.path.exists(storage_path):
-        shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo
-        print(f'Diretório "{storage_path}" e seu conteúdo foram removidos.')
+    #storage_path = "storage"
+    #if os.path.exists(storage_path):
+        #shutil.rmtree(storage_path)  # Remove o diretório e todo o seu conteúdo
+        #print(f'Diretório "{storage_path}" e seu conteúdo foram removidos.')
 
     server_ip='0.0.0.0'
     server_port=54321

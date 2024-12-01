@@ -16,10 +16,11 @@ import time
 
 class NMS_server_UDP:
 
-    def __init__(self):
+    def __init__(self, storage_path):
         self.maxT = 3
         self.currentT = 0
         self.threads = {}
+        self.storage_path = storage_path
 
 
 
@@ -32,7 +33,7 @@ class NMS_server_UDP:
         received = False
         socket.settimeout(30)
         sendMessage(socket, addr, task.to_bytes(), 1)
-        file =openFile(task.task_id, device)
+        file =openFile(task.task_id, device, self.storage_path)
         while not received:
             try:
                 print(f"Server client listening:\n")

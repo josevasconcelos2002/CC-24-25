@@ -17,7 +17,7 @@ import time
 
 class NMS_server:
 
-    def __init__(self):
+    def __init__(self, storage_path):
         self.lastTask = 1
         self.tasks = Tasks()
         self.waitingTasks = {}
@@ -29,6 +29,7 @@ class NMS_server:
         self.cond = threading.Condition()
         self.lock = threading.Lock()
         self._stop_event = threading.Event()
+        self.storage_path = storage_path
 
         # Inicia uma thread para escutar clientes UDP
         #udp_thread = threading.Thread(target=self.listen_for_datagrams, args=(self.UDP_socket,))
@@ -82,7 +83,7 @@ class NMS_server:
             devices = task.getDevices()
             maxT = 3
             task_Threads = []
-            nms_udp = NMS_server_UDP()
+            nms_udp = NMS_server_UDP(self.storage_path)
 
             for d in devices:
                 client = self.clients.get_client(d)

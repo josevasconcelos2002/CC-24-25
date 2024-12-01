@@ -8,7 +8,7 @@ import sys
 if __name__ == "__main__":
     # sys.argv[1:] contém os argumentos passados ao script
     if len(sys.argv) < 2:
-        print("Necessita de fornecer 2 argumentos!")
+        print("Necessita de fornecer o client_id e o server_ip!")
         sys.exit(1)
 
     client_id = sys.argv[1]
