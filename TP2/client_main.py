@@ -7,18 +7,20 @@ import sys
 
 if __name__ == "__main__":
     # sys.argv[1:] contém os argumentos passados ao script
-    if len(sys.argv) < 1:
-        print("Usage: python script_name.py <arg1>")
+    if len(sys.argv) < 2:
+        print("Necessita de fornecer 2 argumentos!")
         sys.exit(1)
 
-    arg1 = sys.argv[1]  # Primeiro argumento
+    client_id = sys.argv[1]
+    server_ip = sys.argv[2]
 
-    print(f"Argumento 1: {arg1}")
+    print(f"Client ID: {client_id}")
+    print(f"Server IP: {server_ip}")
 
-    server_ip='10.0.3.2'
+    #server_ip='10.0.3.2'
     server_port=54321
     
-    client1 = Client(server_ip, server_port, arg1 )
+    client1 = Client(server_ip, server_port, client_id)
     client1_thread = threading.Thread(target=client1.listen_for_datagrams)
     client1_thread.daemon = True
     client1_thread.start()
