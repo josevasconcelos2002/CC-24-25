@@ -85,6 +85,19 @@ class NMS_server:
             task_Threads = []
             nms_udp = NMS_server_UDP(self.storage_path)
 
+            if task.config.link_metrics.use_iperf == True:
+                server = self.clients.get_client(task.config.link_metrics.server)
+                if not server:
+                   time.sleep(5)
+                   server = self.clients.get_client(task.config.link_metrics.server)
+                if server:
+                    task.config.link_metrics.server_address = server.address
+                    sendMessage(self.UDP_socket, server.address, str(task.config.link_metrics.duration), 4)
+                else:
+                    for d in devices:
+                        self.waitingTasks[d] = task
+                    break
+
             for d in devices:
                 client = self.clients.get_client(d)
                 if not client:

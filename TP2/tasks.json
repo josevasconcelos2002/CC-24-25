@@ -12,12 +12,13 @@
             },
             "link_metrics": {
                 "use_iperf": true,
+                "server": "n2",
+                "duration": 30,
                 "server_address": null,
                 "bandwidth": true,
                 "packet_loss": false,
                 "jitter": true,
                 "latency": true,
-                "destination": "192.42.0.2",
                 "packet_count": 10
             },
             "AlterFlowConditions": {
@@ -43,12 +44,13 @@
             },
             "link_metrics": {
                 "use_iperf": true,
+                "server": "n2",
+                "duration": 30,
                 "server_address": null,
                 "bandwidth": true,
                 "packet_loss": false,
                 "jitter": true,
                 "latency": true,
-                "destination": "192.42.0.2",
                 "packet_count": 10
             },
             "AlterFlowConditions": {
@@ -74,12 +76,13 @@
             },
             "link_metrics": {
                 "use_iperf": true,
+                "server": "n2",
+                "duration": 30,
                 "server_address": null,
                 "bandwidth": true,
                 "packet_loss": false,
                 "jitter": true,
                 "latency": false,
-                "destination": "192.42.0.2",
                 "packet_count": 10
             },
             "AlterFlowConditions": {
