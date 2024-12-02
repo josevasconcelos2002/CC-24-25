@@ -14,6 +14,7 @@ import psutil
 import shlex
 import os
 from datetime import datetime
+import re
 
 class Client: 
 
@@ -94,8 +95,7 @@ class Client:
             output = response.stdout
             with self.lock:
                 self.doingTask = False
-                
-                self.TCP_socket.close()
+
                 print ("TCP SOCKET FECHADA")
                 
             sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
@@ -122,16 +122,13 @@ class Client:
         duration = task.duration
         cpu = 0
         ram = 0
-        """
-        if task.config.device_metrics.cpu_usage == True:
-            cpu = psutil.cpu_percent(interval=0)
-        if task.config.device_metrics.ram_usage == True:
-            ram = psutil.virtual_memory().percent
-        """
+        message_parts = []
+
         for i in range(0,int(duration/frequency)):
-            if task.config.device_metrics.cpu_usage == True:
+            messages_parts = []
+            if task.config.device_metrics.cpu_usage:
              cpu = psutil.cpu_percent(interval=0)
-            if task.config.device_metrics.ram_usage == True:
+            if task.config.device_metrics.ram_usage:
              ram = psutil.virtual_memory().percent
             for j in range(1,frequency):
                 if cpu != 0:
@@ -139,45 +136,75 @@ class Client:
                 if ram != 0:
                     ram = ram + psutil.virtual_memory().percent
                 time.sleep(1)
-            if cpu != 0 and ram != 0:
-                
-                sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + "'%' ram_usage: " + str(ram/(frequency+1)) + '%', 3)
-            else: 
-                if cpu != 0:
-                   
-                    sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "cpu_usage: " + str(cpu/(frequency+1)) + '%', 3)
-                else: 
-                    if ram != 0:
-                        
-                        sendMessage(self.UDP_socket, (self.server_ip,self.server_port), "ram_usage: " + str(ram/(frequency+1))+ '%', 3)
-        
-        if task.config.alterflow_conditions.alterflow_conditions == True :
-            print("\nDO WE NEED TO ALERT SERVER ?\n")
-            print(f"\nCPU usage % : {cpu/(frequency+1)}\n")
-            print(f"CPU alertFlow conditions % : {task.config.alterflow_conditions.cpu_usage}\n")
-            print(f"\nRAM usage % : {ram/(frequency+1)}\n")
-            print(f"RAM alertFlow conditions % : {task.config.alterflow_conditions.ram_usage}\n")
-        
-            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions,cpu/(frequency+1), ram/(frequency+1))
-            if(send_alert_notification):
-                #send  a alert TCP datagram 
-                print("\nALERT! CLIENT MUST SEND A ALERT TO THE SERVER\n")
 
-    """      
-    def alterFlow(self, task):
-        message =  struct.pack('!H', 1) + (task.task_id + " " + self.id).encode('utf-8') 
-        self.TCP_socket.send(message)
-        time.sleep(3)
-        while True: #self.doingTask == True:
-            cpu = psutil.cpu_percent(interval=0)  
-            ram = psutil.virtual_memory().percent          
-            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions,cpu, ram)
-            if(send_alert_notification):
-                time = datetime.now()
-                message =  struct.pack('!H', 2) + (time + '\n' + cpu + '\n' + ram + '\n').encode('utf-8')
-                self.TCP_socket.send(message)
-        self.TCP_socket.close()
-    """
+            if task.config.device_metrics.cpu_usage:
+               message_parts.append(f"cpu_usage: {(cpu/(frequency+1))}%")
+            if task.config.device_metrics.ram_usage:
+               message_parts.append(f"ram_usage: {(ram/(frequency+1))}%")
+
+            if task.config.link_metrics.bandwidth:
+                result = subprocess.run(["iperf", "-c", "10.0.0.20", "-t", "1", "-f", "g"], capture_output=True, text=True)
+
+                if result.returncode == 0:
+                # Procure pela linha que contém as informações de largura de banda usando regex
+                  print(result.stdout)#.decode('utf-8'))
+                  match = re.search(r"(\d+\sGBytes)\s+(\d+.\d+\sGbits/sec)", result.stdout)
+                  if match:
+                     transfer = match.group(1)  # Ex: "798 MBytes"
+                     bandwidth = match.group(2).split()  # Ex: "6.66 Mbits/sec"
+                     
+                     bandwidth_mbps = float(bandwidth[0]) * 1000
+                     message_parts.append(f"bandwidth: {bandwidth_mbps}Mbps") 
+                  else:
+                     print("Não foi possível extrair a largura de banda.")
+                else:
+                   print(f"Error: {result.stderr}")
+                        
+             
+
+
+            if task.config.link_metrics.latency.latency or task.config.link_metrics.jitter or task.config.link_metrics.packet_loss:
+               result = subprocess.run(["ping", "10.0.0.20", "-c", "4"], capture_output=True, text=True)
+
+               if result.returncode == 0:
+                 # Procure pelas estatísticas de RTT (min, avg, max, mdev)
+                 rtt_match = re.search(r"min/avg/max/mdev = (\d+.\d+)/(\d+.\d+)/(\d+.\d+)/(\d+.\d+)", result.stdout)
+
+                 loss_match = re.search(r"(\d+)% packet loss", result.stdout)
+
+                 if rtt_match and loss_match:
+                  # Extraia os valores de RTT
+                  min_rtt = float(rtt_match.group(1))
+                  avg_rtt = float(rtt_match.group(2))
+                  max_rtt = float(rtt_match.group(3))
+                  mdev_rtt = float(rtt_match.group(4))
+
+                  packet_loss = float(loss_match.group(1))
+                  if task.config.link_metrics.latency.latency:
+                        message_parts.append(f"Latency: {avg_rtt}ms")                      
+                  if task.config.link_metrics.jitter: 
+                        print(f"\nMAX_RTT: {max_rtt}\n")
+                        print(f"\nMIN_RTT: {min_rtt}\n")
+                        jitter = max_rtt - min_rtt  
+                        message_parts.append(f"Jitter: {jitter} ms")
+                  if task.config.link_metrics.packet_loss:   
+                        message_parts.append(f"Packet_loss: {(packet_loss)}%")
+
+                 else:
+                    print("Failed to extract RTT values from ping output.")
+
+                 
+
+               else:
+                    # If the ping command fails, print the error and return None
+                    print(f"Error: {result.stderr}")
+
+
+            if message_parts:
+                message = " ".join(message_parts)
+                sendMessage(self.UDP_socket, (self.server_ip, self.server_port), message, 3)
+
+    
     
     def alterFlow(self, task):
         message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + b" " + self.id.encode('utf-8') + b'\n'
@@ -198,6 +225,7 @@ class Client:
                     break  # stop further attempts on errors
             time.sleep(1)  # Avoid overloading resource polling
         self.TCP_socket.close()
+        self.TCP_socket = self.setup_TCP_socket()
 
 
 
@@ -236,6 +264,17 @@ class Client:
         """
 
         #return "".join(taskList)
+
+    def do_iperf(self, duration):
+        command = ["iperf", "-s", "-t", duration]
+
+        # Start the iperf3 server using subprocess.run
+        try:
+            # Running the iperf3 server in blocking mode (it will run until interrupted)
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error while running iperf3 server: {e}")
+
 
 
 
@@ -284,6 +323,9 @@ class Client:
                     # Execute Task
 
                     #print(self.server_port)
+            else:
+                if messageType == 4:
+                    self.do_iperf(payload)
 
 
     def to_dict(self):

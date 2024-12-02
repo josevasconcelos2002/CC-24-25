@@ -59,15 +59,13 @@ class LatencyConfig:
     packet_count: int
 
         
-    def __init__(self, latency=None, destination=None, packet_count=None):
+    def __init__(self, latency=None, packet_count=None):
         self.latency = latency if latency is not None else False
-        self.destination = destination if destination is not None else ""
         self.packet_count = packet_count if packet_count is not None else 0
 
     def to_dict(self):
         return {
             "latency": self.latency,
-            "destination": self.destination,
             "packet_count": self.packet_count
         }    
 
@@ -75,6 +73,8 @@ class LatencyConfig:
 
 class Link_metrics:
     use_iperf: bool
+    server: str
+    duration: int
     server_address: str
     frequency: int
     bandwidth: bool
@@ -82,8 +82,10 @@ class Link_metrics:
     packet_loss: bool
     latency: LatencyConfig
 
-    def __init__(self, use_iperf: bool, server_address: str, frequency: int, bandwidth: bool, jitter: bool, packet_loss: bool, latency: LatencyConfig):
+    def __init__(self, use_iperf: bool, server: str, duration: int, server_address: str, frequency: int, bandwidth: bool, jitter: bool, packet_loss: bool, latency: LatencyConfig):
         self.use_iperf = use_iperf
+        self.server = server
+        self.duration = duration
         self.server_address = server_address
         self.frequency = frequency
         self.bandwidth = bandwidth
@@ -95,13 +97,14 @@ class Link_metrics:
     def to_dict(self):
         return {
             "use_iperf": self.use_iperf,
+            "server": self.server,
+            "duration": self.duration,
             "server_address": self.server_address,
             "frequency": self.frequency,
             "bandwidth": self.bandwidth,
             "jitter": self.jitter,
             "packet_loss": self.packet_loss,
             "latency": self.latency.latency,
-            "destination": self.latency.destination,
             "packet_count": self.latency.packet_count
         }    
 

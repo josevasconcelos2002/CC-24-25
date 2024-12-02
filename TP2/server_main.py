@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     # Obter e ajustar o caminho do storage_path
     storage_path = sys.argv[1]
-    if not storage_path.endswith("/storage"):
-        storage_path = os.path.join(storage_path, "storage")
+    if not storage_path.endswith("/storage/"):
+        storage_path = os.path.join(storage_path, "storage/")
     print(f"Storage_path ajustado: {storage_path}")
 
     # Inicializar o servidor NMS

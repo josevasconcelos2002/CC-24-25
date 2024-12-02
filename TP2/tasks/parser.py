@@ -1,4 +1,3 @@
-
 from tasks.task import Task
 from tasks.config import AlterflowConditions, Config, Device_metrics, LatencyConfig, Link_metrics
 
@@ -16,7 +15,6 @@ def parseTasks(lastTask, task):
     if latency:
         latency_config = LatencyConfig(
             True,
-            task["Devices"]["link_metrics"]["destination"],
             task["Devices"]["link_metrics"]["packet_count"]
         )
     else:
@@ -24,6 +22,8 @@ def parseTasks(lastTask, task):
 
     link_metrics = Link_metrics(
         task["Devices"]["link_metrics"]["use_iperf"],
+        task["Devices"]["link_metrics"]["server"],
+        task["Devices"]["link_metrics"]["duration"],
         task["Devices"]["link_metrics"]["server_address"],
         task["frequency"],
         task["Devices"]["link_metrics"]["bandwidth"],
