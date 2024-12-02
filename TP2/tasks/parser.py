@@ -24,6 +24,8 @@ def parseTasks(lastTask, task):
 
     link_metrics = Link_metrics(
         task["Devices"]["link_metrics"]["use_iperf"],
+        task["Devices"]["link_metrics"]["server"],
+        task["Devices"]["link_metrics"]["duration"],
         task["Devices"]["link_metrics"]["server_address"],
         task["frequency"],
         task["Devices"]["link_metrics"]["bandwidth"],
