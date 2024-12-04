@@ -1,5 +1,5 @@
 from tasks.task import Task
-from tasks.config import AlterflowConditions, Config, Device_metrics, LatencyConfig, Link_metrics
+from tasks.config import AlertflowConditions, Config, Device_metrics, LatencyConfig, Link_metrics
 
 
 
@@ -32,20 +32,20 @@ def parseTasks(lastTask, task):
         latency_config
     )
 
-    alterflow = task["Devices"]["AlterFlowConditions"]["alterflow"]
-    if alterflow:
-        alterflow_conditions = AlterflowConditions(
+    alertflow = task["Devices"]["AlertFlowConditions"]["alertflow"]
+    if alertflow:
+        alertflow_conditions = AlertflowConditions(
             True,
-            task["Devices"]["AlterFlowConditions"]["cpu_usage"],
-            task["Devices"]["AlterFlowConditions"]["ram_usage"],
-            task["Devices"]["AlterFlowConditions"]["interface_stats"],
-            task["Devices"]["AlterFlowConditions"]["packet_loss"],
-            task["Devices"]["AlterFlowConditions"]["jitter"]
+            task["Devices"]["AlertFlowConditions"]["cpu_usage"],
+            task["Devices"]["AlertFlowConditions"]["ram_usage"],
+            task["Devices"]["AlertFlowConditions"]["interface_stats"],
+            task["Devices"]["AlertFlowConditions"]["packet_loss"],
+            task["Devices"]["AlertFlowConditions"]["jitter"]
         )
     else:
-        alterflow_conditions = AlterflowConditions()
+        alertflow_conditions = AlertflowConditions()
 
-    config = Config(device_metrics, link_metrics, alterflow_conditions)
+    config = Config(device_metrics, link_metrics, alertflow_conditions)
 
     task_obj = Task(lastTask, task["type"], task["frequency"], task["duration"], task["devices"], config)
     return task_obj

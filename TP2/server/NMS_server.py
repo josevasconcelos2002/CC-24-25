@@ -3,7 +3,7 @@ import socket
 import struct
 import threading
 from tasks.parser import parseTasks
-from tasks.config import Config, Device_metrics, AlterflowConditions, LatencyConfig, Link_metrics
+from tasks.config import Config, Device_metrics, AlertflowConditions, LatencyConfig, Link_metrics
 from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
@@ -91,7 +91,7 @@ class NMS_server:
                    time.sleep(5)
                    server = self.clients.get_client(task.config.link_metrics.server)
                 if server:
-                    task.config.link_metrics.server_address = server.address
+                    task.config.link_metrics.server_address = server.address[0]
                     sendMessage(self.UDP_socket, server.address, str(task.config.link_metrics.duration), 4)
                 else:
                     for d in devices:
@@ -237,7 +237,7 @@ class NMS_server:
                     file = openFile(info[0], info[1], self.storage_path)
                 else:
                     print(f'Aqui está a decoded data: {decoded_data}')
-                    file.write(f"AlterFlow: {decoded_data}\n")
+                    file.write(f"AlertFlow: {decoded_data}\n")
                     file.flush()
 
         print(f"Connection with {addr} closed.")

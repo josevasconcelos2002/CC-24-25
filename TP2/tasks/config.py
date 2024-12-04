@@ -25,16 +25,16 @@ class Device_metrics:
         }
 
 
-class AlterflowConditions:
-    alterflow_conditions: bool
+class AlertflowConditions:
+    alertflow_conditions: bool
     cpu_usage: int   # %
     ram_usage: int   # %
     interface_stats: int  #  pacotes por segundo (pps)
     packet_loss: int  # %
     jitter_limit: int  # e.g. 100 ms
 
-    def __init__(self, alterflow_conditions=None, cpu_usage=None, ram_usage=None, interface_stats=None, packet_loss=None, jitter_limit=None):
-        self.alterflow_conditions = alterflow_conditions if alterflow_conditions is not None else False
+    def __init__(self, alertflow_conditions=None, cpu_usage=None, ram_usage=None, interface_stats=None, packet_loss=None, jitter_limit=None):
+        self.alertflow_conditions = alertflow_conditions if alertflow_conditions is not None else False
         self.cpu_usage = cpu_usage if cpu_usage is not None else 0
         self.ram_usage = ram_usage if ram_usage is not None else 0
         self.interface_stats = interface_stats if interface_stats is not None else 0
@@ -43,7 +43,7 @@ class AlterflowConditions:
 
     def to_dict(self):
         return {
-            "alterflow": self.alterflow_conditions,
+            "alertflow": self.alertflow_conditions,
             "cpu_usage": self.cpu_usage,
             "ram_usage": self.ram_usage,
             "interface_stats": self.interface_stats,
@@ -112,16 +112,16 @@ class Link_metrics:
 class Config:
     device_metrics: Device_metrics
     link_metrics: Link_metrics
-    alterflow_conditions: AlterflowConditions
+    alertflow_conditions: AlertflowConditions
 
-    def __init__(self, device_metrics: Device_metrics, link_metrics: Link_metrics, alterflow_conditions: AlterflowConditions):
+    def __init__(self, device_metrics: Device_metrics, link_metrics: Link_metrics, alertflow_conditions: AlertflowConditions):
         self.device_metrics = device_metrics
         self.link_metrics = link_metrics
-        self.alterflow_conditions = alterflow_conditions
+        self.alertflow_conditions = alertflow_conditions
 
     def to_dict(self):
         return {
             "devices_metric": self.device_metrics.to_dict(),
             "link_metrics": self.link_metrics.to_dict(),
-            "AlterFlowConditions": self.alterflow_conditions.to_dict()
+            "AlertFlowConditions": self.alertflow_conditions.to_dict()
         }

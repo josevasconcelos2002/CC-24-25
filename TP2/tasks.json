@@ -21,8 +21,8 @@
                 "latency": true,
                 "packet_count": 10
             },
-            "AlterFlowConditions": {
-                "alterflow": true,
+            "AlertFlowConditions": {
+                "alertflow": true,
                 "cpu_usage": 1,
                 "ram_usage": 1,
                 "interface_stats": 2000,
@@ -53,8 +53,8 @@
                 "latency": true,
                 "packet_count": 10
             },
-            "AlterFlowConditions": {
-                "alterflow": true,
+            "AlertFlowConditions": {
+                "alertflow": true,
                 "cpu_usage": 1,
                 "ram_usage": 1,
                 "interface_stats": 2000,
@@ -85,8 +85,8 @@
                 "latency": false,
                 "packet_count": 10
             },
-            "AlterFlowConditions": {
-                "alterflow": true,
+            "AlertFlowConditions": {
+                "alertflow": true,
                 "cpu_usage": 1,
                 "ram_usage": 1,
                 "interface_stats": 2000,

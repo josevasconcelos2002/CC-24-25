@@ -2,7 +2,7 @@ import json
 import socket
 import struct
 import uuid
-from tasks.config import AlterflowConditions
+from tasks.config import AlertflowConditions
 from tasks.parser import parseTasks
 from tasks.task import Task
 from misc.sendMessage import sendMessage
@@ -110,7 +110,7 @@ class Client:
 
 
     
-    def alert_conditions(self,alertFlowConditions: AlterflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float):
+    def alert_conditions(self,alertFlowConditions: AlertflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float):
         send_alert = False
         if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage):
             send_alert = True
@@ -207,19 +207,21 @@ class Client:
 
     
     
-    def alterFlow(self, task):
+    def alertFlow(self, task):
         message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + b" " + self.id.encode('utf-8') + b'\n'
         self.TCP_socket.sendall(message)
 
         while self.doingTask:
             cpu = psutil.cpu_percent(interval=1)  
             ram = psutil.virtual_memory().percent          
-            send_alert_notification = self.alert_conditions(task.config.alterflow_conditions, cpu, ram)
+            send_alert_notification = self.alert_conditions(task.config.alertflow_conditions, cpu, ram)
 
             if send_alert_notification:
                 current_time = str(datetime.now())
                 try:
-                    message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + str(cpu).encode('utf-8') + b'\n' + str(ram).encode('utf-8') + b'\n'
+                    cpu_string = "cpu_usage -> " + str(cpu) + " %"
+                    ram_string = "ram_usage -> " + str(ram) + " %"
+                    message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + cpu_string.encode('utf-8') + b'\n' + ram_string.encode('utf-8') + b'\n'
                     self.TCP_socket.sendall(message)
                 except socket.error as e:
                     print(f"Socket send error: {e}")
@@ -243,7 +245,7 @@ class Client:
         taskObject = parseTasks(taskId[2:], taskDict)
 
         print(taskObject.to_bytes())
-        if taskObject.config.alterflow_conditions.alterflow_conditions:
+        if taskObject.config.alertflow_conditions.alertflow_conditions:
             self.TCP_socket.connect((self.server_ip, 54322))
 
         # Inicia as threads necessárias
@@ -251,10 +253,10 @@ class Client:
         exec_thread.daemon = True
         exec_thread.start()
 
-        if taskObject.config.alterflow_conditions.alterflow_conditions:
-            alter_thread = threading.Thread(target=self.alterFlow, args=(taskObject,))
-            alter_thread.daemon = True
-            alter_thread.start()
+        if taskObject.config.alertflow_conditions.alertflow_conditions:
+            alert_thread = threading.Thread(target=self.alertFlow, args=(taskObject,))
+            alert_thread.daemon = True
+            alert_thread.start()
 
         self.medir(taskObject)
 

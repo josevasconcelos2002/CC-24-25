@@ -4,7 +4,7 @@ import socket
 import struct
 import threading
 from clients.client import Client
-from tasks.config import Config, Device_metrics, AlterflowConditions, LatencyConfig, Link_metrics
+from tasks.config import Config, Device_metrics, AlertflowConditions, LatencyConfig, Link_metrics
 from tasks.task import Task
 from tasks.tasks import Tasks
 from clients.clients import Clients
