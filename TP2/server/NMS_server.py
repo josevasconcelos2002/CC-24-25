@@ -79,13 +79,14 @@ class NMS_server:
 
     def processTask(self):
         while not self._stop_event.is_set() and self.currentTask <= len(self.tasks):
+         
             task = self.tasks.get_task(self.currentTask)
             devices = task.getDevices()
             maxT = 3
             task_Threads = []
             nms_udp = NMS_server_UDP(self.storage_path)
 
-            if task.config.link_metrics.use_iperf == True:
+            if task.config.link_metrics.use_iperf == True and self.clients.at_least_one(devices):
                 server = self.clients.get_client(task.config.link_metrics.server)
                 if not server:
                    time.sleep(5)
@@ -95,7 +96,13 @@ class NMS_server:
                     sendMessage(self.UDP_socket, server.address, str(task.config.link_metrics.duration), 4)
                 else:
                     for d in devices:
-                        self.waitingTasks[d] = task
+                        #self.waitingTasks[d] = task
+                      if d not in self.waitingTasks:
+                      # Initialize a new list if the key doesn't exist
+                        self.waitingTasks[d] = []
+                        # Append the new task to the list of tasks for the key
+                        #else:
+                      self.waitingTasks[d].append(task)
                     break
 
             for d in devices:
@@ -114,12 +121,46 @@ class NMS_server:
                     #self.sendMessage(self.UDP_socket, client.address, task.to_bytes())    
 
                 else:
-                    self.waitingTasks[d] = task
+                    if d not in self.waitingTasks:
+                      # Initialize a new list if the key doesn't exist
+                      self.waitingTasks[d] = []
+                    # Append the new task to the list of tasks for the key
+                    #else:
+                    self.waitingTasks[d].append(task)
 
             while nms_udp.threads:
                 time.sleep(0.1)
 
             self.currentTask+=1
+        self.processWaitingTask()
+
+    def processWaitingTask(self):
+        while not self._stop_event.is_set() and len(self.waitingTasks) != 0:
+            devices = self.clients.get_client_ids()
+            nms_udp = NMS_server_UDP(self.storage_path)
+
+
+            for d in devices:
+                task = None
+                client = self.clients.get_client(d)
+                if d in self.waitingTasks:
+                    if len(self.waitingTasks[d]) != 0:
+                        task = self.waitingTasks[d].pop()
+                if task:
+                    if task.config.link_metrics.use_iperf == True: 
+                        server = self.clients.get_client(task.config.link_metrics.server)
+                        if server:
+                            task.config.link_metrics.server_address = server.address[0]
+                            sendMessage(self.UDP_socket, server.address, str(task.config.link_metrics.duration), 4)
+                    with self.cond:
+                        self.waitingTasks
+                        thread = threading.Thread(target=nms_udp.listen_for_datagrams, name =f"Thread-{d}", args=(self.cond,d, client.socket, client.address, task,))
+                        nms_udp.threads[d] = thread
+                        thread.daemon = True
+                        thread.start()
+
+            while nms_udp.threads:
+                time.sleep(0.1)
 
 
 

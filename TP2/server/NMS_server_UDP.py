@@ -34,6 +34,10 @@ class NMS_server_UDP:
         socket.settimeout(30)
         sendMessage(socket, addr, task.to_bytes(), 1)
         file =openFile(task.task_id, device, self.storage_path)
+
+        sequences = {}
+
+        
         while not received:
             try:
                 #print(f"Server client listening:\n")
@@ -66,8 +70,9 @@ class NMS_server_UDP:
 
                      if messageType == 2:
                         #print(f"\nRESULTS: {payload.decode('utf-8')}\n")
-                        file.write( f"RESULTS: {payload.decode('utf-8')}\n")
-                        file.flush()
+
+                        sequences[sequence_number] = payload
+
                         sequence += 1
                 
                     """    
@@ -75,10 +80,29 @@ class NMS_server_UDP:
                         print(payload.decode('utf-8'))
                     """
                     #print(f"Sequence: {sequence}\n Sequence_length: {sequence_length}")
-                    if sequence == sequence_length: 
+
+
+                    if sequence == sequence_length and messageType == 2:
+                 
+                        #print("\nALGUMA COISA\n")
+                        print(f"\nTask {task.task_id} completed on device {device}\n")
+                        result = sequences[0]
+                        for i in range(1,sequence_length):
+                          #print(i)
+                          #print(sequence_length)
+                          #print("\nALGUMA COISA\n")
+                          #print(f"PRINT SEQUENCES {sequences[i]}!!!\n")
+                          result += sequences[i]
+                          #print("\nALGUMA COISA 2\n to be continued ...")
+                          
+                        
+                        file.write(f"RESULTS: {result.decode('utf-8')}\n")
+                        file.flush() 
                         del self.threads[device]
                         self.currentT -=1
                         received = True
+                        #print(f"\nTask {task.task_id} completed on device {device}\n")
+
                         #print(payload.decode('utf-8')+" hello")
                         with cond:
                             cond.notify()
@@ -86,9 +110,11 @@ class NMS_server_UDP:
             except Exception as e:
                #print(e)
                if "timed out" in str(e).lower():
+                sequences = {}
+
                 #print(f"Timeout occured in {addr}!")
                 sequence = 0
-                sendMessage(socket, addr, task.to_bytes(), 1)
+                sendMessage(socket, addr, task.to_bytes(), 5)
             except ConnectionResetError as e:
                 #print(f"Connection reset error: {e}")
                 break

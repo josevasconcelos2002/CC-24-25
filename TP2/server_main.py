@@ -44,4 +44,4 @@ if __name__ == "__main__":
     menu.run()
 
     # Tempo de execução
-    time.sleep(150)
+    #time.sleep(150)
