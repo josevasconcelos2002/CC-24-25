@@ -54,7 +54,7 @@ class Client:
         while self.connected == False and not self._stop_event.is_set():
             # Send this message to the server over UDP
                 sendMessage(self.UDP_socket, (self.server_ip, self.server_port), self.id, 0)
-                print(f"Sent initial client info to server: {self.id}")
+                #print(f"Sent initial client info to server: {self.id}")
                 time.sleep(5)
            
 
@@ -63,15 +63,15 @@ class Client:
         buffer_size = 1024
         while not self._stop_event.is_set():
             try:
-                print(f"Client listening:\n")
+                #print(f"Client listening:\n")
                 data, addr = self.UDP_socket.recvfrom(buffer_size)
                 if data:
                     self.handle_datagram(data, addr)
             except ConnectionResetError as e:
-                print(f"Connection reset error: {e}")
+                #print(f"Connection reset error: {e}")
                 break
             except OSError as e:
-                print(f"OS error (likely socket issue): {e}")
+                #print(f"OS error (likely socket issue): {e}")
                 break
 
     def executeTask(self, command:str):
@@ -91,12 +91,12 @@ class Client:
                 output = response.stdout
         
         # Send the response via UDP
-            time.sleep(5)
+            #time.sleep(5)
             output = response.stdout
             with self.lock:
                 self.doingTask = False
 
-                print ("TCP SOCKET FECHADA")
+                #print ("TCP SOCKET FECHADA")
                 
             sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
             with self.lock:
@@ -110,11 +110,14 @@ class Client:
 
 
     
-    def alert_conditions(self,alertFlowConditions: AlertflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float):
-        send_alert = False
-        if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage):
-            send_alert = True
-        return send_alert
+    def alert_conditions(self,alertFlowConditions: AlertflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float, interface, packet_loss, jitter):
+        if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage or alertFlowConditions.packet_loss <= packet_loss or alertFlowConditions.jitter <= jitter):
+            return True
+        else:
+            for i in interface:
+                if alertFlowConditions.interface_stats <= i[0] or alertFlowConditions.interface_stats <= i[1]:
+                    return True 
+            return False
 
     def medir(self, task: Task):
         task_id = task.task_id
@@ -148,7 +151,7 @@ class Client:
 
                 if result.returncode == 0:
                 # Procure pela linha que contém as informações de largura de banda usando regex
-                  print(result.stdout)#.decode('utf-8'))
+                  #print(result.stdout)#.decode('utf-8'))
                   match = re.search(r"(\d+\sGBytes)\s+(\d+.\d+\sGbits/sec)", result.stdout)
                   if match:
                      transfer = match.group(1)  # Ex: "798 MBytes"
@@ -156,16 +159,18 @@ class Client:
                      
                      bandwidth_mbps = float(bandwidth[0]) * 1000
                      message_parts.append(f"bandwidth: {bandwidth_mbps}Mbps") 
-                  else:
-                     print("Não foi possível extrair a largura de banda.")
-                else:
-                   print(f"Error: {result.stderr}")
+                  #else:
+                     #print("Não foi possível extrair a largura de banda.")
+                #else:
+                   #print(f"Error: {result.stderr}")
                         
              
 
 
             if task.config.link_metrics.latency.latency or task.config.link_metrics.jitter or task.config.link_metrics.packet_loss:
-               result = subprocess.run(["ping", "10.0.0.20", "-c", "4"], capture_output=True, text=True)
+               server_addr = task.config.link_metrics.server_address
+               packet_count = str(task.config.link_metrics.latency.packet_count) 
+               result = subprocess.run(["ping", server_addr, "-c", packet_count], capture_output=True, text=True)
 
                if result.returncode == 0:
                  # Procure pelas estatísticas de RTT (min, avg, max, mdev)
@@ -184,21 +189,21 @@ class Client:
                   if task.config.link_metrics.latency.latency:
                         message_parts.append(f"Latency: {avg_rtt}ms")                      
                   if task.config.link_metrics.jitter: 
-                        print(f"\nMAX_RTT: {max_rtt}\n")
-                        print(f"\nMIN_RTT: {min_rtt}\n")
+                        #print(f"\nMAX_RTT: {max_rtt}\n")
+                        #print(f"\nMIN_RTT: {min_rtt}\n")
                         jitter = max_rtt - min_rtt  
                         message_parts.append(f"Jitter: {jitter} ms")
                   if task.config.link_metrics.packet_loss:   
                         message_parts.append(f"Packet_loss: {(packet_loss)}%")
 
-                 else:
-                    print("Failed to extract RTT values from ping output.")
+                 #else:
+                    #print("Failed to extract RTT values from ping output.")
 
                  
 
-               else:
+               #else:
                     # If the ping command fails, print the error and return None
-                    print(f"Error: {result.stderr}")
+                    #print(f"Error: {result.stderr}")
 
 
             if message_parts:
@@ -212,19 +217,58 @@ class Client:
         self.TCP_socket.sendall(message)
 
         while self.doingTask:
+            packet_loss = 0
+            jitter = 0
             cpu = psutil.cpu_percent(interval=1)  
-            ram = psutil.virtual_memory().percent          
-            send_alert_notification = self.alert_conditions(task.config.alertflow_conditions, cpu, ram)
+            ram = psutil.virtual_memory().percent
+            interface = []
+            for i in task.config.device_metrics.interface_stats:
+                    net1 = psutil.net_io_counters(pernic=True)[i]
+                    packets_sent_1 = net1.packets_sent
+                    packets_recv_1 = net1.packets_recv
+
+                    time.sleep(1)
+
+                    net2 = psutil.net_io_counters(pernic=True)[i]
+                    packets_sent_2 = net2.packets_sent
+                    packets_recv_2 = net2.packets_recv
+
+                    pps_sent = (packets_sent_2 - packets_sent_1)
+                    pps_recv = (packets_recv_2 - packets_recv_1)
+
+                    interface.append((pps_sent, pps_recv))
+            result = subprocess.run(["ping", task.config.link_metrics.server_address, "-c", "2"], capture_output=True, text=True)
+            if result.returncode == 0:
+                 # Procure pelas estatÃ­sticas de RTT (min, avg, max, mdev)
+                 rtt_match = re.search(r"min/avg/max/mdev = (\d+.\d+)/(\d+.\d+)/(\d+.\d+)/(\d+.\d+)", result.stdout)
+
+                 loss_match = re.search(r"(\d+)% packet loss", result.stdout)
+
+                 if rtt_match and loss_match:
+                  # Extraia os valores de RTT
+                  min_rtt = float(rtt_match.group(1))
+                  avg_rtt = float(rtt_match.group(2))
+                  max_rtt = float(rtt_match.group(3))
+                  mdev_rtt = float(rtt_match.group(4))
+
+                  packet_loss = float(loss_match.group(1))
+                  jitter = max_rtt - min_rtt
+            send_alert_notification = self.alert_conditions(task.config.alertflow_conditions, cpu, ram, interface, packet_loss, jitter)
 
             if send_alert_notification:
                 current_time = str(datetime.now())
                 try:
                     cpu_string ="cpu_alert_condition: " +  str(task.config.alertflow_conditions.cpu_usage)  + "% | cpu_usage: " + str(cpu) + "%"
                     ram_string ="ram_alert_condition: " +  str(task.config.alertflow_conditions.ram_usage)  + "% | ram_usage: " + str(ram) + "%"
-                    message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + cpu_string.encode('utf-8') + b'\n' + ram_string.encode('utf-8') + b'\n'
+                    interface_string = "interface_stats_conditions: " + str(task.config.alertflow_conditions.interface_stats) + "pps | "
+                    for i,j in zip(task.config.device_metrics.interface_stats, interface):
+                        interface_string = interface_string + i + ": sent-" + str(j[0]) + "pps receive-" + str(j[1]) + "pps"
+                    packet_loss_string = "packet_loss_condition: " + str(task.config.alertflow_conditions.packet_loss) + "% | packet_loss: " + str(packet_loss) + "%"
+                    jitter_string = "jitter_condition: " + str(task.config.alertflow_conditions.jitter_limit) + "ms | jitter: " + str(jitter) + "ms"
+                    message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + cpu_string.encode('utf-8') + b'\n' + ram_string.encode('utf-8') + b'\n' + interface_string.encode('utf-8') + b'\n' + packet_loss_string.encode('utf-8') + b'\n' + jitter_string.encode('utf-8') + b'\n'
                     self.TCP_socket.sendall(message)
                 except socket.error as e:
-                    print(f"Socket send error: {e}")
+                    #print(f"Socket send error: {e}")
                     break  # stop further attempts on errors
             time.sleep(1)  # Avoid overloading resource polling
         self.TCP_socket.close()
@@ -233,9 +277,11 @@ class Client:
 
 
 
+
+
     def parseTask(self, sequenceLength):
-        taskList = ""
-        for i in range(sequenceLength):
+        taskList = self.sequences[0]
+        for i in range(1,sequenceLength):
             taskList += self.sequences[i] 
         # Converte a string JSON para um dicionário Python
         taskDict = json.loads(taskList)
@@ -244,7 +290,7 @@ class Client:
         taskId = taskDict["task_id"]
         taskObject = parseTasks(taskId[2:], taskDict)
 
-        print(taskObject.to_bytes())
+        #print(taskObject.to_bytes())
         if taskObject.config.alertflow_conditions.alertflow_conditions:
             self.TCP_socket.connect((self.server_ip, 54322))
 
@@ -276,22 +322,29 @@ class Client:
             # Running the iperf3 server in blocking mode (it will run until interrupted)
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error while running iperf3 server: {e}")
+            print(" ")
 
 
 
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
-        print(f"Received raw data: {data}")
+        #print(f"Received raw data: {data}")
         payload = data[14:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
         headers = data[:10]
         sequence = data[10:14]
         source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
-        print(f"Received data: {payload}\n")
-        print(f"Adrr: {addr}\n")
+        #print(f"Received data: {payload}\n")
+        #print(f"\nMESSAGE_TYPE: {messageType}\n")
+
+        if messageType == 5:
+          self.sequences = {}
+          self.sequence = 0
+          messageType = 1
+       
+          #print(f"Adrr: {addr}\n")
         
         # Verifique se a mensagem contém um ID para processar os dados do cliente
         if messageType == 0:
@@ -309,10 +362,12 @@ class Client:
                 time.sleep(3)
                 self.sequences[sequence_number] = payload
                 self.sequence += 1
-                print("\nSequence: " + str(self.sequence))
-                print("Sequence Length: " + str(sequence_length))
+                #print("\nSequence: " + str(self.sequence))
+                #print("Sequence Length: " + str(sequence_length))
                 if self.sequence == sequence_length:
                     # parseTask
+                    print(f"\nSEQUENCE_LENGTH: {sequence_length}\n")
+                    print(f"\nSelf.sequences length: {len(self.sequences)}\n")
                     self.parseTask(sequence_length)
                     #print(taskString)
                     
@@ -328,7 +383,10 @@ class Client:
                     #print(self.server_port)
             else:
                 if messageType == 4:
-                    self.do_iperf(payload)
+                    iperf_thread = threading.Thread(target=self.do_iperf, args=(payload,))
+                    iperf_thread.daemon = True
+                    iperf_thread.start()
+                    #self.do_iperf(payload)
 
 
     def to_dict(self):

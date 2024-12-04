@@ -34,9 +34,13 @@ class NMS_server_UDP:
         socket.settimeout(30)
         sendMessage(socket, addr, task.to_bytes(), 1)
         file =openFile(task.task_id, device, self.storage_path)
+
+        sequences = {}
+
+        
         while not received:
             try:
-                print(f"Server client listening:\n")
+                #print(f"Server client listening:\n")
                 data, addre = socket.recvfrom(buffer_size)
                 #time.sleep(0.5)
                 #print("stopping")
@@ -51,49 +55,65 @@ class NMS_server_UDP:
                     
                     
                     
-                    print(f"Received data length: {len(data)}")
+                    #print(f"Received data length: {len(data)}")
                     payload = data[14:]
                     headers = data[:10]
                     seq = data[10:14]
                     source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
                     sequence_number, sequence_length = struct.unpack('!HH', seq)
-                    print(payload.decode('utf-8'))
+                    #print(payload.decode('utf-8'))
                     if messageType == 3:
-                        print(f"\nMETRICS: {payload.decode('utf-8')}\n")
+                        #print(f"\nMETRICS: {payload.decode('utf-8')}\n")
                         file.write(f"METRICS: {payload.decode('utf-8')}\n")
                         file.flush()
                     else: 
 
                      if messageType == 2:
-                        print(f"\nRESULTS: {payload.decode('utf-8')}\n")
-                        file.write( f"RESULTS: {payload.decode('utf-8')}\n")
-                        file.flush()
+                        #print(f"\nRESULTS: {payload.decode('utf-8')}\n")
+                        sequences[sequence_number] = payload
                         sequence += 1
                 
                     """    
                     else:
                         print(payload.decode('utf-8'))
                     """
-                    print(f"Sequence: {sequence}\n Sequence_length: {sequence_length}")
-                    if sequence == sequence_length: 
+                    #print(f"Sequence: {sequence}\n Sequence_length: {sequence_length}")
+                    if sequence == sequence_length and messageType == 2:
+                 
+                        #print("\nALGUMA COISA\n")
+                        print(f"\nTask {task.task_id} completed on device {device}\n")
+                        result = sequences[0]
+                        for i in range(1,sequence_length):
+                          #print(i)
+                          #print(sequence_length)
+                          #print("\nALGUMA COISA\n")
+                          #print(f"PRINT SEQUENCES {sequences[i]}!!!\n")
+                          result += sequences[i]
+                          #print("\nALGUMA COISA 2\n to be continued ...")
+                          
+                        
+                        file.write(f"RESULTS: {result.decode('utf-8')}\n")
+                        file.flush() 
                         del self.threads[device]
                         self.currentT -=1
                         received = True
-                        print(payload.decode('utf-8')+" hello")
+                        #print(f"\nTask {task.task_id} completed on device {device}\n")
+                        #print(payload.decode('utf-8')+" hello")
                         with cond:
                             cond.notify()
                     
             except Exception as e:
-               print(e)
+               #print(e)
                if "timed out" in str(e).lower():
-                print(f"Timeout occured in {addr}!")
+                sequences = {}
+                #print(f"Timeout occured in {addr}!")
                 sequence = 0
-                sendMessage(socket, addr, task.to_bytes(), 1)
+                sendMessage(socket, addr, task.to_bytes(), 5)
             except ConnectionResetError as e:
-                print(f"Connection reset error: {e}")
+                #print(f"Connection reset error: {e}")
                 break
             except OSError as e:
-                print(f"OS error (likely socket issue): {e}")
+                #print(f"OS error (likely socket issue): {e}")
                 break
             #finally:
                 #break

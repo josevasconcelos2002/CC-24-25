@@ -15,13 +15,18 @@ def sendMessage(socket, addr, data, messageType):
         sequence_length = len(chunks)
 
         for info in chunks:
+      
 
             # UDP header fields
             length = 14 + len(info)  # UDP header (8 bytes) + data
             checksum = 0  # Simulated, checksum calculation not implemented
 
+            if messageType == 5 and sequence_number != 0:
+               udp_header = struct.pack('!HHHHH', source_port, dest_port, length, checksum, 1)
+            else:
             # Pack the UDP header fields
-            udp_header = struct.pack('!HHHHH', source_port, dest_port, length, checksum, messageType)
+               udp_header = struct.pack('!HHHHH', source_port, dest_port, length, checksum, messageType)
+
             # Pack additional protocol fields
             message = struct.pack('!HH', sequence_number, sequence_length) + info
 
@@ -30,7 +35,7 @@ def sendMessage(socket, addr, data, messageType):
             # Combine the UDP header with the message
             datagram = udp_header + message
 
-            print(f"datagram: {datagram}\n")
+            #print(f"datagram: {datagram}\n")
         
             # Send the datagram to the server
             socket.sendto(datagram, addr)

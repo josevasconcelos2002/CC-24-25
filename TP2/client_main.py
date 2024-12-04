@@ -27,7 +27,13 @@ if __name__ == "__main__":
 
     client1.send_initial_info()
 
-    time.sleep(150)
+    #time.sleep(150)
+    while True:
 
-    client1.close()
-    client1_thread.join()
+      option = str(input("\nIntroduza :q para sair "))
+      if option == ":q":
+         #sys.exit(0)
+         #client1.close()
+         #client1_thread.join()
+         break
+

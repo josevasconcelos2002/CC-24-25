@@ -34,3 +34,14 @@ class Clients:
     def __iter__(self):
     # Make the class iterable by returning an iterator over self.clients.items()
         return iter(self.clients.items())
+
+    def get_client_ids(self):
+        # Return a list of client IDs
+        return list(self.clients.keys())
+
+    def at_least_one(self, devices):
+        for d in devices:
+            client = self.get_client(d)
+            if client:
+                return True
+        return False
