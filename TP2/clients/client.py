@@ -143,7 +143,8 @@ class Client:
                message_parts.append(f"ram_usage: {(ram/(frequency+1))}%")
 
             if task.config.link_metrics.bandwidth:
-                result = subprocess.run(["iperf", "-c", "10.0.0.20", "-t", "1", "-f", "g"], capture_output=True, text=True)
+                server_addr = task.config.link_metrics.server_address
+                result = subprocess.run(["iperf", "-c", server_addr, "-t", "1", "-f", "g"], capture_output=True, text=True)
 
                 if result.returncode == 0:
                 # Procure pela linha que contém as informações de largura de banda usando regex
