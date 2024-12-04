@@ -207,7 +207,7 @@ class Client:
 
     
     
-    def alertFlow(self, task):
+    def alertFlow(self, task: Task):
         message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + b" " + self.id.encode('utf-8') + b'\n'
         self.TCP_socket.sendall(message)
 
@@ -219,8 +219,8 @@ class Client:
             if send_alert_notification:
                 current_time = str(datetime.now())
                 try:
-                    cpu_string = "cpu_usage -> " + str(cpu) + " %"
-                    ram_string = "ram_usage -> " + str(ram) + " %"
+                    cpu_string ="cpu_alert_condition: " +  str(task.config.alertflow_conditions.cpu_usage)  + "% | cpu_usage: " + str(cpu) + "%"
+                    ram_string ="ram_alert_condition: " +  str(task.config.alertflow_conditions.ram_usage)  + "% | ram_usage: " + str(ram) + "%"
                     message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + cpu_string.encode('utf-8') + b'\n' + ram_string.encode('utf-8') + b'\n'
                     self.TCP_socket.sendall(message)
                 except socket.error as e:
