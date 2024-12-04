@@ -54,7 +54,7 @@ class Client:
         while self.connected == False and not self._stop_event.is_set():
             # Send this message to the server over UDP
                 sendMessage(self.UDP_socket, (self.server_ip, self.server_port), self.id, 0)
-                print(f"Sent initial client info to server: {self.id}")
+                #print(f"Sent initial client info to server: {self.id}")
                 time.sleep(5)
            
 
@@ -63,15 +63,15 @@ class Client:
         buffer_size = 1024
         while not self._stop_event.is_set():
             try:
-                print(f"Client listening:\n")
+                #print(f"Client listening:\n")
                 data, addr = self.UDP_socket.recvfrom(buffer_size)
                 if data:
                     self.handle_datagram(data, addr)
             except ConnectionResetError as e:
-                print(f"Connection reset error: {e}")
+                #print(f"Connection reset error: {e}")
                 break
             except OSError as e:
-                print(f"OS error (likely socket issue): {e}")
+                #print(f"OS error (likely socket issue): {e}")
                 break
 
     def executeTask(self, command:str):
@@ -96,7 +96,7 @@ class Client:
             with self.lock:
                 self.doingTask = False
 
-                print ("TCP SOCKET FECHADA")
+                #print ("TCP SOCKET FECHADA")
                 
             sendMessage(self.UDP_socket, (self.server_ip, self.server_port), output, 2)
             with self.lock:
@@ -148,7 +148,7 @@ class Client:
 
                 if result.returncode == 0:
                 # Procure pela linha que contém as informações de largura de banda usando regex
-                  print(result.stdout)#.decode('utf-8'))
+                  #print(result.stdout)#.decode('utf-8'))
                   match = re.search(r"(\d+\sGBytes)\s+(\d+.\d+\sGbits/sec)", result.stdout)
                   if match:
                      transfer = match.group(1)  # Ex: "798 MBytes"
@@ -156,10 +156,10 @@ class Client:
                      
                      bandwidth_mbps = float(bandwidth[0]) * 1000
                      message_parts.append(f"bandwidth: {bandwidth_mbps}Mbps") 
-                  else:
-                     print("Não foi possível extrair a largura de banda.")
-                else:
-                   print(f"Error: {result.stderr}")
+                  #else:
+                     #print("Não foi possível extrair a largura de banda.")
+                #else:
+                   #print(f"Error: {result.stderr}")
                         
              
 
@@ -184,21 +184,21 @@ class Client:
                   if task.config.link_metrics.latency.latency:
                         message_parts.append(f"Latency: {avg_rtt}ms")                      
                   if task.config.link_metrics.jitter: 
-                        print(f"\nMAX_RTT: {max_rtt}\n")
-                        print(f"\nMIN_RTT: {min_rtt}\n")
+                        #print(f"\nMAX_RTT: {max_rtt}\n")
+                        #print(f"\nMIN_RTT: {min_rtt}\n")
                         jitter = max_rtt - min_rtt  
                         message_parts.append(f"Jitter: {jitter} ms")
                   if task.config.link_metrics.packet_loss:   
                         message_parts.append(f"Packet_loss: {(packet_loss)}%")
 
-                 else:
-                    print("Failed to extract RTT values from ping output.")
+                 #else:
+                    #print("Failed to extract RTT values from ping output.")
 
                  
 
-               else:
+               #else:
                     # If the ping command fails, print the error and return None
-                    print(f"Error: {result.stderr}")
+                    #print(f"Error: {result.stderr}")
 
 
             if message_parts:
@@ -224,7 +224,7 @@ class Client:
                     message = struct.pack('!H', 2) + current_time.encode('utf-8') + b'\n' + cpu_string.encode('utf-8') + b'\n' + ram_string.encode('utf-8') + b'\n'
                     self.TCP_socket.sendall(message)
                 except socket.error as e:
-                    print(f"Socket send error: {e}")
+                    #print(f"Socket send error: {e}")
                     break  # stop further attempts on errors
             time.sleep(1)  # Avoid overloading resource polling
         self.TCP_socket.close()
@@ -244,7 +244,7 @@ class Client:
         taskId = taskDict["task_id"]
         taskObject = parseTasks(taskId[2:], taskDict)
 
-        print(taskObject.to_bytes())
+        #print(taskObject.to_bytes())
         if taskObject.config.alertflow_conditions.alertflow_conditions:
             self.TCP_socket.connect((self.server_ip, 54322))
 
@@ -276,22 +276,22 @@ class Client:
             # Running the iperf3 server in blocking mode (it will run until interrupted)
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error while running iperf3 server: {e}")
+            print(" ")
 
 
 
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
-        print(f"Received raw data: {data}")
+        #print(f"Received raw data: {data}")
         payload = data[14:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
         headers = data[:10]
         sequence = data[10:14]
         source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
-        print(f"Received data: {payload}\n")
-        print(f"Adrr: {addr}\n")
+        #print(f"Received data: {payload}\n")
+        #print(f"Adrr: {addr}\n")
         
         # Verifique se a mensagem contém um ID para processar os dados do cliente
         if messageType == 0:
@@ -309,8 +309,8 @@ class Client:
                 time.sleep(3)
                 self.sequences[sequence_number] = payload
                 self.sequence += 1
-                print("\nSequence: " + str(self.sequence))
-                print("Sequence Length: " + str(sequence_length))
+                #print("\nSequence: " + str(self.sequence))
+                #print("Sequence Length: " + str(sequence_length))
                 if self.sequence == sequence_length:
                     # parseTask
                     self.parseTask(sequence_length)

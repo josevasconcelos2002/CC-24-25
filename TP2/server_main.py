@@ -1,5 +1,6 @@
 import shutil
 from server.NMS_server import NMS_server
+from ui.menu import Menu
 from clients.client import Client
 import os
 import time
@@ -38,6 +39,9 @@ if __name__ == "__main__":
     server1_thread = threading.Thread(target=nms_server.listen_TCP, args=(nms_server.TCP_socket,))
     server1_thread.daemon = True
     server1_thread.start()
+
+    menu = Menu(storage_path)
+    menu.run()
 
     # Tempo de execução
     time.sleep(150)

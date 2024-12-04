@@ -57,9 +57,9 @@ class NMS_server:
             tasks_json = json.load(file)
 
         if not tasks_json:
-            print("error")
+            print(" ")
         else:
-            print(f"success {len(tasks_json)}")
+            print(" ")
 
         for task in tasks_json:
             task_obj = parseTasks(self.lastTask, task)
@@ -71,7 +71,7 @@ class NMS_server:
             t = self.tasks.get_task( str(id))
             if not t:
                 break  # Exit loop if task is not found
-            print(f"{t.task_id}  {t.type} {t.devices}")
+            #print(f"{t.task_id}  {t.type} {t.devices}")
             id += 1
 
 
@@ -143,31 +143,31 @@ class NMS_server:
         buffer_size = 1024
         while not self._stop_event.is_set():
             try:
-                print(f"Server listening:\n")
+                #print(f"Server listening:\n")
                 data, addr = socket.recvfrom(buffer_size)
-                print(f'Data received')
+                #print(f'Data received')
                 if data:
                     self.handle_datagram(data, addr)
             except ConnectionResetError as e:
-                print(f"Connection reset error: {e}")
+                #print(f"Connection reset error: {e}")
                 break
             except OSError as e:
-                print(f"OS error (likely socket issue): {e}")
+                #print(f"OS error (likely socket issue): {e}")
                 break
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
-        print(f"Received raw data: {data}")
+        #print(f"Received raw data: {data}")
         payload = data[14:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
         headers = data[:10]
         sequence = data[10:14]
         source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
-        print(f"Received data: {payload}\n")
-        print(f"Adrr: {addr}\n")
+        #print(f"Received data: {payload}\n")
+        #print(f"Adrr: {addr}\n")
         if messageType == 2:
-            print(f"Received data: {payload}\n")
+            print("")
 
         
         # Verifique se a mensagem contém um ID para processar os dados do cliente
@@ -192,22 +192,22 @@ class NMS_server:
                 
                     client = ClientServer(addr, socket)
                     self.clients.add_client(client_id, client)
-                    print(f"Client {client_id} added with Address {client_addr}")
-                    print(f"{str(self.clients.to_dict())}\n")
+                    #print(f"Client {client_id} added with Address {client_addr}")
+                    #print(f"{str(self.clients.to_dict())}\n")
 
                     if len(self.clients) == 1:
                         task_thread = threading.Thread(target=self.processTask)
                         task_thread.daemon = True
                         task_thread.start()
                         self.threads.append(task_thread)
-                    else: 
-                        print("Erro. Length not valid")
+                    #else: 
+                        #print("Erro. Length not valid")
                 
-            else:
-                print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")
-        else:
+            #else:
+                #print("Erro: Dados do cliente ausentes ou incompletos na mensagem de registro.")
+        #else:
             # Processa outras mensagens
-            print(f"Received non-registration data: {payload}")
+            #print(f"Received non-registration data: {payload}")
 
     def close(self):
             self._stop_event.set()
@@ -218,7 +218,7 @@ class NMS_server:
 
     def handle_client(self , conn, addr):
         """Function to handle communication with a single client."""
-        print('Connected by', addr)
+        #print('Connected by', addr)
         file = None
         with conn:
             while True:
@@ -229,24 +229,24 @@ class NMS_server:
                 messageType = struct.unpack('!H',headers)
 
                 decoded_data = data[2:].decode('utf-8')
-                print(f'Aqui está a message tpye: {messageType}')
+                #print(f'Aqui está a message tpye: {messageType}')
 
                 if messageType[0] == 1:
-                    print(f'Aqui está a decoded data: {decoded_data}')
+                    #print(f'Aqui está a decoded data: {decoded_data}')
                     info = decoded_data.split()
                     file = openFile(info[0], info[1], self.storage_path)
                 else:
-                    print(f'Aqui está a decoded data: {decoded_data}')
+                    #print(f'Aqui está a decoded data: {decoded_data}')
                     file.write(f"AlertFlow: {decoded_data}\n")
                     file.flush()
 
-        print(f"Connection with {addr} closed.")
+        #print(f"Connection with {addr} closed.")
 
     def listen_TCP(self, socket):
         #s.listen()
         self.TCP_socket.listen()
         
-        print(f"TCP a ouvir")
+        #print(f"TCP a ouvir")
         while True:
             conn, addr = self.TCP_socket.accept()
             # Start a new thread to handle the client

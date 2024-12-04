@@ -30,7 +30,7 @@ def sendMessage(socket, addr, data, messageType):
             # Combine the UDP header with the message
             datagram = udp_header + message
 
-            print(f"datagram: {datagram}\n")
+            #print(f"datagram: {datagram}\n")
         
             # Send the datagram to the server
             socket.sendto(datagram, addr)
