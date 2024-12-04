@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from os import system
+import time
 import os
 
 @dataclass
@@ -7,6 +8,10 @@ class Menu:
 
     def __init__(self, storage_path):
         self.storage_path = storage_path
+
+    def clear_terminal(self):
+        """Limpa o terminal enviando caracteres de escape ANSI."""
+        print("\033[2J\033[H", end="")
 
     def run(self):
         
@@ -30,11 +35,28 @@ class Menu:
                     print(f"A pasta '{task_id_normalized}' existe em '{self.storage_path}'!")
 
                     device_id = str(input("\nIntroduza o device_id: "))
-                    device_id_normalized = "n" + device_id
+                    device_id_normalized = "n" + device_id + ".txt"
 
                     files_in_directory = os.listdir(task_path)  # Lista todos os ficheiros na pasta
                     if device_id_normalized in files_in_directory:  # Verifica se o device_id está na lista de ficheiros
-                        print(f"O ficheiro '{device_id_normalized}' existe em '{task_path}'!")
+                        print(f"O ficheiro '{device_id_normalized}' existe em '{task_path}'!\n\n\n")
+                        file_path = os.path.join(task_path, device_id_normalized)
+                        #print(f"\nFILE_PATH: {file_path}\n")
+                        
+                        if os.path.isfile(file_path):
+                            try:
+                                #self.clear_terminal()
+                                with open(file_path, 'r', encoding='utf-8') as file:
+                                    
+                                    content = file.read()
+                                    #self.clear_terminal()
+                                    #print("Conteúdo do ficheiro:")
+                                    print(content)
+                                    print("\n\n\t\tConsulta efetuada com sucesso!\n\n")
+                                    time.sleep(5)
+                                file.close()
+                            except Exception as e:
+                                print(f"Erro ao ler o ficheiro: {e}")
                     else:
                         print(f"O ficheiro '{device_id_normalized}' não existe em '{task_path}'.")
                 else:
@@ -45,4 +67,4 @@ class Menu:
 
 
             elif option == "0":
-                system.exit(0)
+                break
