@@ -54,7 +54,6 @@ class Client:
         while self.connected == False and not self._stop_event.is_set():
             # Send this message to the server over UDP
                 sendMessage(self.UDP_socket, (self.server_ip, self.server_port), self.id, 0)
-                #print(f"Sent initial client info to server: {self.id}")
                 time.sleep(5)
            
 
@@ -111,7 +110,7 @@ class Client:
 
     
     def alert_conditions(self,alertFlowConditions: AlertflowConditions,cpu_percentage_usage: float, ram_percentage_usage: float, interface, packet_loss, jitter):
-        if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage or alertFlowConditions.packet_loss <= packet_loss or alertFlowConditions.jitter <= jitter):
+        if(alertFlowConditions.cpu_usage <= cpu_percentage_usage or alertFlowConditions.ram_usage <= ram_percentage_usage or alertFlowConditions.packet_loss <= packet_loss or alertFlowConditions.jitter_limit <= jitter):
             return True
         else:
             for i in interface:
@@ -128,7 +127,7 @@ class Client:
         message_parts = []
 
         for i in range(0,int(duration/frequency)):
-            messages_parts = []
+            message_parts = []
             if task.config.device_metrics.cpu_usage:
              cpu = psutil.cpu_percent(interval=0)
             if task.config.device_metrics.ram_usage:
@@ -159,13 +158,6 @@ class Client:
                      
                      bandwidth_mbps = float(bandwidth[0]) * 1000
                      message_parts.append(f"bandwidth: {bandwidth_mbps}Mbps") 
-                  #else:
-                     #print("Não foi possível extrair a largura de banda.")
-                #else:
-                   #print(f"Error: {result.stderr}")
-                        
-             
-
 
             if task.config.link_metrics.latency.latency or task.config.link_metrics.jitter or task.config.link_metrics.packet_loss:
                server_addr = task.config.link_metrics.server_address
@@ -189,28 +181,17 @@ class Client:
                   if task.config.link_metrics.latency.latency:
                         message_parts.append(f"Latency: {avg_rtt}ms")                      
                   if task.config.link_metrics.jitter: 
-                        #print(f"\nMAX_RTT: {max_rtt}\n")
-                        #print(f"\nMIN_RTT: {min_rtt}\n")
                         jitter = max_rtt - min_rtt  
                         message_parts.append(f"Jitter: {jitter} ms")
                   if task.config.link_metrics.packet_loss:   
                         message_parts.append(f"Packet_loss: {(packet_loss)}%")
 
-                 #else:
-                    #print("Failed to extract RTT values from ping output.")
-
-                 
-
-               #else:
-                    # If the ping command fails, print the error and return None
-                    #print(f"Error: {result.stderr}")
-
 
             if message_parts:
                 message = " ".join(message_parts)
+                #print(f"Mensagem: {message}")
                 sendMessage(self.UDP_socket, (self.server_ip, self.server_port), message, 3)
-
-    
+        
     
     def alertFlow(self, task: Task):
         message = struct.pack('!H', 1) + task.task_id.encode('utf-8') + b" " + self.id.encode('utf-8') + b'\n'
@@ -329,15 +310,12 @@ class Client:
 
     def handle_datagram(self,data, addr):
         # Decodifique os dados recebidos de bytes para string
-        #print(f"Received raw data: {data}")
         payload = data[14:]
         payload = payload.decode('utf-8')  # 'ignore' skips invalid bytes
         headers = data[:10]
         sequence = data[10:14]
         source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
-        #print(f"Received data: {payload}\n")
-        #print(f"\nMESSAGE_TYPE: {messageType}\n")
 
         if messageType == 5:
           self.sequences = {}
@@ -358,16 +336,13 @@ class Client:
 
         else:
             if messageType == 1:
-            #with self.lock:
-                time.sleep(3)
-                self.sequences[sequence_number] = payload
+                
+                if sequence_number not in self.sequences: 
+                    self.sequences[sequence_number] = payload            
+               
+                #self.sequences[sequence_number] = payload
                 self.sequence += 1
-                #print("\nSequence: " + str(self.sequence))
-                #print("Sequence Length: " + str(sequence_length))
                 if self.sequence == sequence_length:
-                    # parseTask
-                    print(f"\nSEQUENCE_LENGTH: {sequence_length}\n")
-                    print(f"\nSelf.sequences length: {len(self.sequences)}\n")
                     self.parseTask(sequence_length)
                     #print(taskString)
                     
@@ -379,8 +354,6 @@ class Client:
                     # Criar Threads no cliente : Metrics Thread, AlertFlow Thread , Execute Task Thread
 
                     # Execute Task
-
-                    #print(self.server_port)
             else:
                 if messageType == 4:
                     iperf_thread = threading.Thread(target=self.do_iperf, args=(payload,))

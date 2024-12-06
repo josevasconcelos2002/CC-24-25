@@ -1,4 +1,4 @@
-from server.NMS_server import NMS_server
+#from server.NMS_server import NMS_server
 from clients.client import Client
 import os
 import time
@@ -32,8 +32,4 @@ if __name__ == "__main__":
 
       option = str(input("\nIntroduza :q para sair "))
       if option == ":q":
-         #sys.exit(0)
-         #client1.close()
-         #client1_thread.join()
          break
-

@@ -40,22 +40,9 @@ class NMS_server_UDP:
         
         while not received:
             try:
-                #print(f"Server client listening:\n")
                 data, addre = socket.recvfrom(buffer_size)
-                #time.sleep(0.5)
-                #print("stopping")
-                #received = True
-                #self.currentT -= 1
-                #del self.threads[device]
-                #with cond:
-                    #cond.notify()
 
                 if data:
-                    #self.handle_datagram(data, addr)
-                    
-                    
-                    
-                    #print(f"Received data length: {len(data)}")
                     payload = data[14:]
                     headers = data[:10]
                     seq = data[10:14]
@@ -65,12 +52,15 @@ class NMS_server_UDP:
                     if messageType == 3:
                         #print(f"\nMETRICS: {payload.decode('utf-8')}\n")
                         file.write(f"METRICS: {payload.decode('utf-8')}\n")
+                        #print(payload)
                         file.flush()
                     else: 
 
                      if messageType == 2:
                         #print(f"\nRESULTS: {payload.decode('utf-8')}\n")
-                        sequences[sequence_number] = payload
+                        #sequences[sequence_number] = payload
+                        if sequence_number not in sequences: 
+                            sequences[sequence_number] = payload
                         sequence += 1
                 
                     """    
@@ -84,12 +74,7 @@ class NMS_server_UDP:
                         print(f"\nTask {task.task_id} completed on device {device}\n")
                         result = sequences[0]
                         for i in range(1,sequence_length):
-                          #print(i)
-                          #print(sequence_length)
-                          #print("\nALGUMA COISA\n")
-                          #print(f"PRINT SEQUENCES {sequences[i]}!!!\n")
                           result += sequences[i]
-                          #print("\nALGUMA COISA 2\n to be continued ...")
                           
                         
                         file.write(f"RESULTS: {result.decode('utf-8')}\n")
@@ -97,13 +82,10 @@ class NMS_server_UDP:
                         del self.threads[device]
                         self.currentT -=1
                         received = True
-                        #print(f"\nTask {task.task_id} completed on device {device}\n")
-                        #print(payload.decode('utf-8')+" hello")
                         with cond:
                             cond.notify()
                     
             except Exception as e:
-               #print(e)
                if "timed out" in str(e).lower():
                 sequences = {}
                 #print(f"Timeout occured in {addr}!")
