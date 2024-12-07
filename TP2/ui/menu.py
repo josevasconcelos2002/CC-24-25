@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from os import system
+import shutil
 import time
 import os
 
@@ -17,29 +18,29 @@ class Menu:
         
         while True:
             print('''
-                Bem-vindo!
+                Welcome!
             
-                [1]- Introduza um task_id
-                [0]- Sair
+                [1]- Choose a task ID
+                [0]- Quit
                 ''')
-            option = str(input("\nEscolha uma opção: "))
+            option = str(input("\nChoose an option: "))
 
             if option == "1":
-                task_id = str(input("\nIntroduza o task_id: "))
+                task_id = str(input("\nChoose a task ID: "))
 
                 task_id_normalized = "T-" + task_id
 
                 #se existir, pedir para introduzir um device_id
                 task_path = os.path.join(self.storage_path, task_id_normalized)
                 if os.path.isdir(task_path):
-                    print(f"A pasta '{task_id_normalized}' existe em '{self.storage_path}'!")
+                    print(f"Found folder '{task_id_normalized}' in '{self.storage_path}'!")
 
-                    device_id = str(input("\nIntroduza o device_id: "))
+                    device_id = str(input("\nChoose a device ID: "))
                     device_id_normalized = "n" + device_id + ".txt"
 
                     files_in_directory = os.listdir(task_path)  # Lista todos os ficheiros na pasta
                     if device_id_normalized in files_in_directory:  # Verifica se o device_id está na lista de ficheiros
-                        print(f"O ficheiro '{device_id_normalized}' existe em '{task_path}'!\n\n\n")
+                        print(f"Found file '{device_id_normalized}' in '{task_path}'!\n\n\n")
                         file_path = os.path.join(task_path, device_id_normalized)
                         #print(f"\nFILE_PATH: {file_path}\n")
                         
@@ -52,19 +53,20 @@ class Menu:
                                     #self.clear_terminal()
                                     #print("Conteúdo do ficheiro:")
                                     print(content)
-                                    print("\n\n\t\tConsulta efetuada com sucesso!\n\n")
+                                    print("\n\n\t\tFile read successfully!\n\n")
                                     time.sleep(5)
                                 file.close()
                             except Exception as e:
-                                print(f"Erro ao ler o ficheiro: {e}")
+                                print(f"[Error]: Reading File {e}")
                     else:
-                        print(f"O ficheiro '{device_id_normalized}' não existe em '{task_path}'.")
+                        print(f"Not found file'{device_id_normalized}' in '{task_path}'.")
                 else:
-                    print(f"A pasta '{task_id_normalized}' não existe em '{self.storage_path}'.")
+                    print(f"Not found folder '{task_id_normalized}' in '{self.storage_path}'.")
 
                 #se nao existir, pedir para introduzir outra vez
                 
 
 
             elif option == "0":
+                shutil.rmtree(self.storage_path)
                 break
