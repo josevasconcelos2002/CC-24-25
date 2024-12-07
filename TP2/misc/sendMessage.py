@@ -33,7 +33,7 @@ def sendMessage(socket, addr, data, messageType):
 
         data = data.encode('utf-8')
 
-        chunk_size = 400
+        chunk_size = 512
         chunks = [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
         sequence_number = 0
