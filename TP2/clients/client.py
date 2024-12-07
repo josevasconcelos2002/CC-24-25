@@ -632,7 +632,7 @@ class Client:
         sequence = data[10:14]
         source_port, dest_port, length, checksum, messageType = struct.unpack('!HHHHH', headers)
         sequence_number, sequence_length = struct.unpack('!HH', sequence)
-        
+
         if messageType == 5:
           self.sequences = {}
           self.sequence = 0
@@ -666,7 +666,7 @@ class Client:
                     self.sequence = 0
                     self.sequences = {}
                     # Enviar Ack para o servidor
-                    sendMessage(self.UDP_socket, (self.server_ip, self.server_port),"Received", 0)
+                    sendMessage(self.UDP_socket, (self.server_ip, self.server_port),"Received", 1)
 
                     # Criar Threads no cliente : Metrics Thread, AlertFlow Thread , Execute Task Thread
 
